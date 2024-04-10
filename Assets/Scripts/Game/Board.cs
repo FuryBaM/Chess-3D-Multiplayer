@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,8 +9,10 @@ public class Board : MonoBehaviour
     private Piece[,] _board = new Piece[8, 8];
     private int _currentPlayer = 0;
     private int _currentMove = 1;
-    private bool _enpassantAvailable = false;
-    private bool _canCastle = false;
+    private HashSet<Piece> _movedPieces = new HashSet<Piece>();
+    [Header("Piece Movement")]
+    [SerializeField] private float _moveDuration = 1f;
+    [SerializeField] private AnimationCurve _pieceMovementCurve;
     [Header("Piece Prefabs")]
     [SerializeField] Piece whiteKing;
     [SerializeField] Piece whitePawn;
@@ -28,7 +32,7 @@ public class Board : MonoBehaviour
 
     private void Start()
     {
-        fenImport("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
         //fenImport(fen);
     }
     public static bool IsPositionInBounds(Vector2 position) => !(position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8);
@@ -62,7 +66,7 @@ public class Board : MonoBehaviour
         return position;
     }
 
-    public void fenImport(string fenString)
+    public void ImportFEN(string fenString)
     {
         ClearBoard();
         string[] parts = fenString.Split(' ');
@@ -136,6 +140,24 @@ public class Board : MonoBehaviour
         return piece;
     }
 
+    public IEnumerator MovePieceSmoothly(Piece piece, Vector2Int startPosition, Vector2Int endPosition, float moveDuration, AnimationCurve curve)
+    {
+        Vector3 start = new Vector3(startPosition.x, 0, startPosition.y);
+        Vector3 end = new Vector3(endPosition.x, 0, endPosition.y);
+        float timeElapsed = 0f;
+
+        while (timeElapsed < moveDuration)
+        {
+            float t = timeElapsed / moveDuration;
+            piece.transform.position = Vector3.Lerp(start, end, curve.Evaluate(t));
+            timeElapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        // Ensure the piece ends up at the exact destination
+        piece.transform.position = end;
+    }
+
     public bool MakeMove(Piece piece, Vector2Int startPosition, Vector2Int endPosition)
     {
         if (((int)piece.Side) != _currentPlayer)
@@ -155,11 +177,14 @@ public class Board : MonoBehaviour
                 Destroy(_board[endPosition.y, endPosition.x].gameObject);
                 print("Captured a piece");
             }
-            piece.transform.position = new Vector3(endPosition.x, 0, endPosition.y);
+
+            StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
+            _movedPieces.Add(piece);
             _board[endPosition.y, endPosition.x] = piece;
             _board[startPosition.y, startPosition.x] = null;
             _currentPlayer = 1 - _currentPlayer;
         }
+        _currentMove++;
         return canMove;
     }
 
@@ -197,7 +222,7 @@ public class Board : MonoBehaviour
             Board myScript = (Board)target;
             if (GUILayout.Button("Import FEN"))
             {
-                myScript.fenImport(myScript.fen);
+                myScript.ImportFEN(myScript.fen);
             }
         }
     }
