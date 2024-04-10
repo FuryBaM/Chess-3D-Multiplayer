@@ -37,8 +37,4 @@ public class King : Piece
             return false;
         }
     }
-    public bool CanCastle(bool isShortCastle)
-    {
-        return false;
-    }
 }
