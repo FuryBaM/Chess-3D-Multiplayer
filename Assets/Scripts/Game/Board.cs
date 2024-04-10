@@ -68,6 +68,7 @@ public class Board : MonoBehaviour
 
     public void ImportFEN(string fenString)
     {
+        if (!Application.isPlaying) return;
         ClearBoard();
         string[] parts = fenString.Split(' ');
         string[] rows = parts[0].Split('/');
