@@ -84,7 +84,7 @@ public class Board : MonoBehaviour
                 }
                 else
                 {
-                    Piece piece = spawnPieceByChar(c);
+                    Piece piece = SpawnPieceByChar(c);
                     Vector3 position = new Vector3(x, 0, y);
                     piece.transform.position = position;
                     _board[y, x] = piece;
@@ -93,7 +93,7 @@ public class Board : MonoBehaviour
             }
         }
     }
-    private Piece spawnPieceByChar(char fenChar)
+    private Piece SpawnPieceByChar(char fenChar)
     {
         Piece piece = null;
         switch (fenChar)
@@ -153,8 +153,6 @@ public class Board : MonoBehaviour
             timeElapsed += Time.deltaTime;
             yield return null;
         }
-
-        // Ensure the piece ends up at the exact destination
         piece.transform.position = end;
     }
 
@@ -165,33 +163,98 @@ public class Board : MonoBehaviour
             print($"It's not your turn! Makes move {Enum.ToObject(typeof(Side), 1 - piece.Side).ToString()}");
             return false;
         }
-        bool canMove = piece.MovePiece(startPosition, endPosition, _board);
+
+        bool canMove = false;
+
+        if (piece.GetType() == typeof(King) && Mathf.Abs(endPosition.x - startPosition.x) > 1)
+        {
+            canMove = Castle(endPosition.x > startPosition.x);
+            if (canMove)
+            {
+                return true;
+            }
+        }
+        else
+        {
+            canMove = piece.MovePiece(startPosition, endPosition, _board);
+        }
+
+        if (!canMove)
+        {
+            return false;
+        }
+
         if (piece.GetType() == typeof(King) && IsAttackedCell(endPosition))
         {
             return false;
         }
-        if (canMove)
-        {
-            if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, _board) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
-            {
-                Destroy(_board[endPosition.y, endPosition.x].gameObject);
-                print("Captured a piece");
-            }
 
-            StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
-            _movedPieces.Add(piece);
-            _board[endPosition.y, endPosition.x] = piece;
-            _board[startPosition.y, startPosition.x] = null;
-            _currentPlayer = 1 - _currentPlayer;
+        if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, _board) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
+        {
+            Destroy(_board[endPosition.y, endPosition.x].gameObject);
+            print("Captured a piece");
         }
+
+        StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
+        _movedPieces.Add(piece);
+        _board[endPosition.y, endPosition.x] = piece;
+        _board[startPosition.y, startPosition.x] = null;
+        _currentPlayer = 1 - _currentPlayer;
         _currentMove++;
-        return canMove;
+        return true;
+    }
+
+    public bool Castle(bool isShortCastle)
+    {
+        int rank = _currentPlayer == 0 ? 0 : 7;
+        int kingStartFile = 4;
+        int rookStartFile = isShortCastle ? 7 : 0;
+        int kingEndFile = isShortCastle ? 6 : 2;
+        int rookEndFile = isShortCastle ? 5 : 3;
+
+        Piece king = _board[rank, kingStartFile];
+        Piece rook = _board[rank, rookStartFile];
+        if (king == null || rook == null || _movedPieces.Contains(king) || _movedPieces.Contains(rook))
+        {
+            Debug.Log("Cannot castle: king or rook has moved.");
+            return false;
+        }
+        for (int file = Mathf.Min(kingStartFile, rookStartFile) + 1; file < Mathf.Max(kingStartFile, rookStartFile); file++)
+        {
+            if (_board[rank, file] != null)
+            {
+                Debug.Log("Cannot castle: there are pieces between the king and rook.");
+                return false;
+            }
+        }
+        Vector2Int kingStartPosition = new Vector2Int(kingStartFile, rank);
+        Vector2Int kingEndPosition = new Vector2Int(kingEndFile, rank);
+
+        if (IsAttackedCell(kingStartPosition) || IsAttackedCell(kingEndPosition))
+        {
+            Debug.Log("Cannot castle: king would move through or into an attacked square.");
+            return false;
+        }
+        StartCoroutine(MovePieceSmoothly(king, kingStartPosition, kingEndPosition, _moveDuration, _pieceMovementCurve));
+        StartCoroutine(MovePieceSmoothly(rook, new Vector2Int(rookStartFile, rank), new Vector2Int(rookEndFile, rank), _moveDuration, _pieceMovementCurve));
+
+        _movedPieces.Add(king);
+        _movedPieces.Add(rook);
+        _board[rank, kingStartFile] = null;
+        _board[rank, rookStartFile] = null;
+        _board[rank, kingEndFile] = king;
+        _board[rank, rookEndFile] = rook;
+        _currentPlayer = 1 - _currentPlayer;
+        _currentMove++;
+
+        return true;
     }
 
     public bool IsEmptyCell(Vector2Int position) => _board[position.y, position.x] == null;
 
     public bool IsAttackedCell(Vector2Int position)
     {
+        if (!IsPositionInBounds(position)) return false;
         for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)
@@ -210,7 +273,6 @@ public class Board : MonoBehaviour
         }
         return false;
     }
-
 
     [CustomEditor(typeof(Board))]
     public class customButton : Editor
