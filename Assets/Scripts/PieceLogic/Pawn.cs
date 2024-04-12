@@ -10,6 +10,7 @@ public class Pawn : Piece
         int endY = Mathf.RoundToInt(opponentPiecePosition.y);
         if (Mathf.Abs(endX - startX) == 1 && Mathf.Abs(endY - startY) == 1)
         {
+            if (board[endY, endX] == null) return false;
             if (Side == Side.white)
             {
                 return endY > startY;
@@ -59,5 +60,24 @@ public class Pawn : Piece
             Debug.Log("Invalid move for the pawn.");
             return false;
         }
+    }
+    public bool IsEnPassant(Vector2Int startPosition, Vector2Int endPosition, Move lastMove)
+    {
+        Piece movedPiece = lastMove.MovedPiece;
+        Vector2Int movedPieceEndPosition = lastMove.EndPosition;
+
+        if (movedPiece.GetType() == typeof(Pawn) && Mathf.Abs(movedPieceEndPosition.y - lastMove.StartPosition.y) == 2)
+        {
+            print(Mathf.Abs(startPosition.x - endPosition.x) == 1);
+            print(endPosition.x == movedPieceEndPosition.x);
+            print(endPosition.y == movedPieceEndPosition.y + (movedPiece.Side == Side.white ? -1 : 1));
+            if (Mathf.Abs(startPosition.x - endPosition.x) == 1 &&
+                endPosition.x == movedPieceEndPosition.x && 
+                endPosition.y == movedPieceEndPosition.y + (movedPiece.Side == Side.white ? -1 : 1))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

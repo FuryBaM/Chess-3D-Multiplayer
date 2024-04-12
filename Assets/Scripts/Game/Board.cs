@@ -10,6 +10,7 @@ public class Board : MonoBehaviour
     private int _currentPlayer = 0;
     private int _currentMove = 1;
     private HashSet<Piece> _movedPieces = new HashSet<Piece>();
+    private List<Move> _movesHistory = new List<Move>();
     [Header("Piece Movement")]
     [SerializeField] private float _moveDuration = 1f;
     [SerializeField] private AnimationCurve _pieceMovementCurve;
@@ -161,13 +162,13 @@ public class Board : MonoBehaviour
     {
         if (((int)piece.Side) != _currentPlayer)
         { 
-            print($"It's not your turn! Makes move {Enum.ToObject(typeof(Side), 1 - piece.Side).ToString()}");
+            Debug.Log($"It's not your turn! Makes move {Enum.ToObject(typeof(Side), 1 - piece.Side).ToString()}");
             return false;
         }
 
         bool canMove = false;
-
-        if (piece.GetType() == typeof(King) && Mathf.Abs(endPosition.x - startPosition.x) > 1)
+        // Check castling
+        if (piece.GetType() == typeof(King) && Mathf.Abs(endPosition.x - startPosition.x) > 1 && endPosition.y == startPosition.y)
         {
             canMove = Castle(endPosition.x > startPosition.x);
             if (canMove)
@@ -175,9 +176,27 @@ public class Board : MonoBehaviour
                 return true;
             }
         }
-        else
+        else // Or check the move
         {
             canMove = piece.MovePiece(startPosition, endPosition, _board);
+        }
+
+        if (piece.GetType() == typeof(Pawn)) // Check if its enpassant
+        {
+            Move lastMove = _movesHistory[_movesHistory.Count - 1];
+            if (_movesHistory.Count > 0 && piece.GetComponent<Pawn>().IsEnPassant(startPosition, endPosition, lastMove))
+            {
+                Vector2Int enPassantCapturePosition = lastMove.EndPosition;
+                StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
+                _movedPieces.Add(piece);
+                Destroy(_board[enPassantCapturePosition.y, enPassantCapturePosition.x].gameObject);
+                _board[enPassantCapturePosition.y, enPassantCapturePosition.x] = null;
+                _board[endPosition.y, endPosition.x] = piece;
+                _currentPlayer = 1 - _currentPlayer;
+                _currentMove++;
+                _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
+                return true;
+            }
         }
 
         if (!canMove)
@@ -193,7 +212,7 @@ public class Board : MonoBehaviour
         if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, _board) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
         {
             Destroy(_board[endPosition.y, endPosition.x].gameObject);
-            print("Captured a piece");
+            Debug.Log("Captured a piece");
         }
 
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
@@ -202,6 +221,7 @@ public class Board : MonoBehaviour
         _board[startPosition.y, startPosition.x] = null;
         _currentPlayer = 1 - _currentPlayer;
         _currentMove++;
+        _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
         return true;
     }
 
@@ -247,10 +267,9 @@ public class Board : MonoBehaviour
         _board[rank, rookEndFile] = rook;
         _currentPlayer = 1 - _currentPlayer;
         _currentMove++;
-
+        _movesHistory.Add(new Move(king, true, new Vector2Int(kingStartFile, rank), new Vector2Int(kingEndFile, rank)));
         return true;
     }
-
     public bool IsEmptyCell(Vector2Int position) => _board[position.y, position.x] == null;
 
     public bool IsAttackedCell(Vector2Int position)
