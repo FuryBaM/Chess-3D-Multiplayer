@@ -6,7 +6,7 @@ public class PlayerController : MonoBehaviour
     [Header("Board Features")]
     [SerializeField] private Board board;
     [SerializeField] private Material _outline;
-    private Piece _selectedPiece;
+    private Piece _selectedPiece = null;
     [SerializeField] private Side _player = Side.white;
     private void Update()
     {
@@ -36,6 +36,7 @@ public class PlayerController : MonoBehaviour
                 {
                     _selectedPiece = hit.collider.GetComponent<Piece>();
                     _selectedPiece.GetComponent<MeshRenderer>().materials = new Material[] { _selectedPiece.GetComponent<MeshRenderer>().materials[0], _outline };
+                    HighlightPossibleMoves(board.GetPiecePosition(_selectedPiece));
                 }
             }
         }
@@ -47,6 +48,22 @@ public class PlayerController : MonoBehaviour
         Array.Resize(ref materials, materials.Length - 1);
         _selectedPiece.GetComponent<MeshRenderer>().materials = materials;
         _selectedPiece = null;
+        board.UnhighlightAllCells();
+    }
+    private void HighlightPossibleMoves(Vector2Int position)
+    {
+        for (int y = 0; y < 8; y++)
+        {
+            for (int x = 0; x < 8; x++)
+            {
+                Vector2Int targetPosition = new Vector2Int(x, y);
+                Move lastMove = board.GetLastMove();
+                if (_selectedPiece.MovePiece(position, targetPosition, board.GameBoard,lastMove))
+                {
+                    board.HighlightCell(targetPosition);
+                }
+            }
+        }
     }
     private void MovePieceToMouse()
     {

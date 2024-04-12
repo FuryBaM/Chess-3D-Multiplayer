@@ -10,7 +10,7 @@ public class King : Piece
         int endY = Mathf.RoundToInt(opponentPiecePosition.y);
         return Mathf.Abs(endX - startX) <= 1 && Mathf.Abs(endY - startY) <= 1;
     }
-    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board)
+    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board, Move lastMove)
     {
         int startX = Mathf.RoundToInt(startPosition.x);
         int startY = Mathf.RoundToInt(startPosition.y);

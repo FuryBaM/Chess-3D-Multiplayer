@@ -10,7 +10,7 @@ public class Rook : Piece
         int endY = Mathf.RoundToInt(endPosition.y);
         return (startX == endX || startY == endY) && !(startX == endX && startY == endY);
     }
-    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board)
+    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board, Move lastMove)
     {
         int startX = Mathf.RoundToInt(startPosition.x);
         int startY = Mathf.RoundToInt(startPosition.y);

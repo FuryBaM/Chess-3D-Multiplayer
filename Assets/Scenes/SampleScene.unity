@@ -226,6 +226,10 @@ PrefabInstance:
       propertyPath: _pieceMovementCurve.m_PostInfinity
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 1322509657005682461, guid: 2403ae79adb3ae946927c1234d4975aa, type: 3}
+      propertyPath: highlightPrefab
+      value: 
+      objectReference: {fileID: 3605017766165551996, guid: 970afe9b4fdd7ca43b4f6a481b216c3a, type: 3}
     - target: {fileID: 1322509657005777665, guid: 2403ae79adb3ae946927c1234d4975aa, type: 3}
       propertyPath: m_Name
       value: Board

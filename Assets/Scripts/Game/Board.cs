@@ -7,6 +7,7 @@ using UnityEngine;
 public class Board : MonoBehaviour
 {
     private Piece[,] _board = new Piece[8, 8];
+    public Piece[,] GameBoard {get { return _board; } }
     private int _currentPlayer = 0;
     private int _currentMove = 1;
     private HashSet<Piece> _movedPieces = new HashSet<Piece>();
@@ -14,6 +15,8 @@ public class Board : MonoBehaviour
     [Header("Piece Movement")]
     [SerializeField] private float _moveDuration = 1f;
     [SerializeField] private AnimationCurve _pieceMovementCurve;
+    [SerializeField] private GameObject highlightPrefab;
+    private List<GameObject> highlights = new List<GameObject>();
     [Header("Piece Prefabs")]
     [SerializeField] Piece whiteKing;
     [SerializeField] Piece whitePawn;
@@ -49,6 +52,24 @@ public class Board : MonoBehaviour
                 }
             }
         }
+    }
+    public void HighlightCell(Vector2Int position)
+    {
+        GameObject highlight = Instantiate(highlightPrefab, new Vector3(position.x, 0, position.y), new Quaternion(-90f, 0, 0, 0));
+        highlights.Add(highlight);
+    }
+
+    public void UnhighlightAllCells()
+    {
+        foreach (GameObject highlight in highlights)
+        {
+            Destroy(highlight);
+        }
+    }
+    public Move GetLastMove()
+    {
+        Move lastMove = _movesHistory.Count > 0 ? _movesHistory[_movesHistory.Count - 1] : null;
+        return lastMove;
     }
     public Vector2Int GetPiecePosition(Piece piece)
     {
@@ -178,12 +199,13 @@ public class Board : MonoBehaviour
         }
         else // Or check the move
         {
-            canMove = piece.MovePiece(startPosition, endPosition, _board);
+            Move lastMove = _movesHistory.Count > 0 ? _movesHistory[_movesHistory.Count - 1] : null;
+            canMove = piece.MovePiece(startPosition, endPosition, _board, lastMove);
         }
 
         if (piece.GetType() == typeof(Pawn)) // Check if its enpassant
         {
-            Move lastMove = _movesHistory[_movesHistory.Count - 1];
+            Move lastMove = _movesHistory.Count > 0 ? _movesHistory[_movesHistory.Count - 1] : null;
             if (_movesHistory.Count > 0 && piece.GetComponent<Pawn>().IsEnPassant(startPosition, endPosition, lastMove))
             {
                 Vector2Int enPassantCapturePosition = lastMove.EndPosition;
@@ -282,7 +304,8 @@ public class Board : MonoBehaviour
                 Piece piece = _board[i, j];
                 if (piece != null && piece.Side != (Side)_currentPlayer)
                 {
-                    bool canMove = piece.MovePiece(new Vector2Int(j, i), position, _board);
+                    Move lastMove = GetLastMove();
+                    bool canMove = piece.MovePiece(new Vector2Int(j, i), position, _board, lastMove);
                     bool canCapture = piece.CanCapture(new Vector2Int(j, i), position, _board);
                     if (canMove && canCapture) // It is attacked cell
                     {

@@ -9,7 +9,7 @@ public abstract class Piece : MonoBehaviour
 {
     [SerializeField] private Side _pieceSide = Side.white;
     public Side Side { get => _pieceSide; protected set { _pieceSide = value; } }
-    public abstract bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board);
+    public abstract bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board, Move lastMove);
     public virtual bool CanCapture(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board)
     {
         return true;

@@ -23,7 +23,7 @@ public class Pawn : Piece
         return false;
     }
 
-    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board)
+    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board, Move lastMove)
     {
         int startX = Mathf.RoundToInt(startPosition.x);
         int startY = Mathf.RoundToInt(startPosition.y);
@@ -55,6 +55,10 @@ public class Pawn : Piece
         {
             return true;
         }
+        else if (IsEnPassant(startPosition, endPosition, lastMove))
+        {
+            return true;
+        }
         else
         {
             Debug.Log("Invalid move for the pawn.");
@@ -63,6 +67,7 @@ public class Pawn : Piece
     }
     public bool IsEnPassant(Vector2Int startPosition, Vector2Int endPosition, Move lastMove)
     {
+        if (lastMove == null) return false; 
         Piece movedPiece = lastMove.MovedPiece;
         Vector2Int movedPieceEndPosition = lastMove.EndPosition;
 
