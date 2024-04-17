@@ -49,8 +49,16 @@ public class Rook : Piece
                 x += deltaX;
                 y += deltaY;
             }
-            Debug.Log("Valid move for the rook.");
-            return true;
+            if (board[endY, endX] == null || board[endY, endX].Side != this.Side)
+            {
+                Debug.Log("Valid move for the rook.");
+                return true;
+            }
+            else
+            {
+                Debug.Log("Target position is occupied by own piece.");
+                return false;
+            }
         }
         else
         {

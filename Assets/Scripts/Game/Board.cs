@@ -55,7 +55,7 @@ public class Board : MonoBehaviour
     }
     public void HighlightCell(Vector2Int position)
     {
-        GameObject highlight = Instantiate(highlightPrefab, new Vector3(position.x, 0, position.y), new Quaternion(-90f, 0, 0, 0));
+        GameObject highlight = Instantiate(highlightPrefab, new Vector3(position.x, 0, position.y), Quaternion.AngleAxis(90, Vector3.right));
         highlights.Add(highlight);
     }
 
@@ -221,10 +221,7 @@ public class Board : MonoBehaviour
             }
         }
 
-        if (!canMove)
-        {
-            return false;
-        }
+        if (!canMove) return false;
 
         if (piece.GetType() == typeof(King) && IsAttackedCell(endPosition))
         {

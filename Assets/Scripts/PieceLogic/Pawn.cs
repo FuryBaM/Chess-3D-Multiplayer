@@ -71,7 +71,7 @@ public class Pawn : Piece
         Piece movedPiece = lastMove.MovedPiece;
         Vector2Int movedPieceEndPosition = lastMove.EndPosition;
 
-        if (movedPiece.GetType() == typeof(Pawn) && Mathf.Abs(movedPieceEndPosition.y - lastMove.StartPosition.y) == 2)
+        if (movedPiece.GetType() == typeof(Pawn) && Mathf.Abs(movedPieceEndPosition.y - lastMove.StartPosition.y) == 2 && startPosition.y == movedPieceEndPosition.y)
         {
             print(Mathf.Abs(startPosition.x - endPosition.x) == 1);
             print(endPosition.x == movedPieceEndPosition.x);

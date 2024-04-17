@@ -31,8 +31,16 @@ public class Knight : Piece
         int dy = Mathf.Abs(endY - startY);
         if ((dx == 2 && dy == 1) || (dx == 1 && dy == 2))
         {
-            Debug.Log("Valid move for the knight.");
-            return true;
+            if (board[endY, endX] == null || board[endY, endX].Side != this.Side)
+            {
+                Debug.Log("Valid move for the knight.");
+                return true;
+            }
+            else
+            {
+                Debug.Log("Target position is occupied by own piece.");
+                return false;
+            }
         }
         else
         {

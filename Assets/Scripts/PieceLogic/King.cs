@@ -29,7 +29,16 @@ public class King : Piece
         if (Mathf.Abs(endX - startX) <= 1 && Mathf.Abs(endY - startY) <= 1)
         {
             Debug.Log("Valid move for the king.");
-            return true;
+            if (board[endY, endX] == null || board[endY, endX].Side != this.Side)
+            {
+                Debug.Log("Valid move for the king.");
+                return true;
+            }
+            else
+            {
+                Debug.Log("Target position is occupied by own piece.");
+                return false;
+            }
         }
         else
         {

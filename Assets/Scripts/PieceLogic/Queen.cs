@@ -8,7 +8,8 @@ public class Queen : Piece
         int startY = Mathf.RoundToInt(startPosition.y);
         int endX = Mathf.RoundToInt(endPosition.x);
         int endY = Mathf.RoundToInt(endPosition.y);
-        if (startX == endX || startY == endY || Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY))
+        bool friendlyFire = board[endPosition.y, endPosition.x] && board[endY, endX].Side == Side;
+        if (startX == endX || startY == endY || Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY) && !friendlyFire)
         {
             return true;
         }
@@ -20,10 +21,12 @@ public class Queen : Piece
         int startY = Mathf.RoundToInt(startPosition.y);
         int endX = Mathf.RoundToInt(endPosition.x);
         int endY = Mathf.RoundToInt(endPosition.y);
+        
         if (!Board.IsPositionInBounds(new Vector2(startX, startY)) || !Board.IsPositionInBounds(new Vector2(endX, endY)))
         {
             return false;
         }
+        
         if (startPosition == endPosition)
         {
             Debug.Log("Start and end positions are the same.");
@@ -32,11 +35,11 @@ public class Queen : Piece
 
         if (startX == endX || startY == endY || Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY))
         {
-            int deltaX = (endX - startX) > 0 ? 1 : -1;
-            int deltaY = (endY - startY) > 0 ? 1 : -1;
+            int deltaX = (endX - startX) == 0 ? 0 : (endX - startX) / Mathf.Abs(endX - startX);
+            int deltaY = (endY - startY) == 0 ? 0 : (endY - startY) / Mathf.Abs(endY - startY);
             int x = startX + deltaX;
             int y = startY + deltaY;
-            while (x != endX && y != endY)
+            while (x != endX || y != endY)
             {
                 if (board[y, x] != null)
                 {
@@ -45,7 +48,7 @@ public class Queen : Piece
                         Debug.Log("There is a piece blocking the queen's path by own piece");
                         return false;
                     }
-                    else if (board[y, x].Side == 1 - Side && x != endX && y != endY)
+                    else if (board[y, x].Side != Side)
                     {
                         Debug.Log("There is a piece blocking the queen's path by enemy piece");
                         return false;
@@ -54,8 +57,16 @@ public class Queen : Piece
                 x += deltaX;
                 y += deltaY;
             }
-            Debug.Log("Valid move for the queen.");
-            return true;
+            if (board[endY, endX] == null || board[endY, endX].Side != this.Side)
+            {
+                Debug.Log("Valid move for the queen.");
+                return true;
+            }
+            else
+            {
+                Debug.Log("Target position is occupied by own piece.");
+                return false;
+            }
         }
         else
         {
