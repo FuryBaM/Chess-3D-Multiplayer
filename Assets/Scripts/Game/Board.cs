@@ -7,16 +7,30 @@ using UnityEngine;
 public class Board : MonoBehaviour
 {
     private Piece[,] _board = new Piece[8, 8];
-    public Piece[,] GameBoard {get { return _board; } }
+    public Piece[,] GameBoard 
+    {
+        get 
+        {
+            return _board.Clone() as Piece[,]; 
+        } 
+    }
     private int _currentPlayer = 0;
+    public int Player
+    {
+        get 
+        {
+            return _currentPlayer;
+        }
+    }
     private int _currentMove = 1;
     private HashSet<Piece> _movedPieces = new HashSet<Piece>();
     private List<Move> _movesHistory = new List<Move>();
     [Header("Piece Movement")]
     [SerializeField] private float _moveDuration = 1f;
     [SerializeField] private AnimationCurve _pieceMovementCurve;
-    [SerializeField] private GameObject highlightPrefab;
-    private List<GameObject> highlights = new List<GameObject>();
+    [SerializeField] private GameObject _highlightPrefab;
+    [SerializeField] private GameObject _hightlightCapturablePrefab;
+    private List<GameObject> _highlights = new List<GameObject>();
     [Header("Piece Prefabs")]
     [SerializeField] Piece whiteKing;
     [SerializeField] Piece whitePawn;
@@ -37,7 +51,6 @@ public class Board : MonoBehaviour
     private void Start()
     {
         ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-        //fenImport(fen);
     }
     public static bool IsPositionInBounds(Vector2 position) => !(position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8);
     public void ClearBoard()
@@ -53,15 +66,23 @@ public class Board : MonoBehaviour
             }
         }
     }
-    public void HighlightCell(Vector2Int position)
+    public void HighlightCell(Vector2Int position, bool selfPiece)
     {
-        GameObject highlight = Instantiate(highlightPrefab, new Vector3(position.x, 0, position.y), Quaternion.AngleAxis(90, Vector3.right));
-        highlights.Add(highlight);
+        GameObject highlight;
+        if (selfPiece)
+        {
+            highlight = Instantiate(_hightlightCapturablePrefab, new Vector3(position.x, 0, position.y), Quaternion.AngleAxis(90, Vector3.right));
+        }
+        else
+        {
+            highlight = Instantiate(_highlightPrefab, new Vector3(position.x, 0, position.y), Quaternion.AngleAxis(90, Vector3.right));
+        }
+        _highlights.Add(highlight);
     }
 
     public void UnhighlightAllCells()
     {
-        foreach (GameObject highlight in highlights)
+        foreach (GameObject highlight in _highlights)
         {
             Destroy(highlight);
         }
@@ -86,6 +107,12 @@ public class Board : MonoBehaviour
             }
         }
         return position;
+    }
+
+    public Piece GetPieceAtPosition(Vector2Int position)
+    {
+        if (!IsPositionInBounds(position)) return null;
+        return _board[position.y, position.x];
     }
 
     public void ImportFEN(string fenString)
@@ -200,7 +227,7 @@ public class Board : MonoBehaviour
         else // Or check the move
         {
             Move lastMove = _movesHistory.Count > 0 ? _movesHistory[_movesHistory.Count - 1] : null;
-            canMove = piece.MovePiece(startPosition, endPosition, _board, lastMove);
+            canMove = piece.MovePiece(startPosition, endPosition, this);
         }
 
         if (piece.GetType() == typeof(Pawn)) // Check if its enpassant
@@ -228,7 +255,7 @@ public class Board : MonoBehaviour
             return false;
         }
 
-        if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, _board) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
+        if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, this) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
         {
             Destroy(_board[endPosition.y, endPosition.x].gameObject);
             Debug.Log("Captured a piece");
@@ -298,12 +325,16 @@ public class Board : MonoBehaviour
         {
             for (int j = 0; j < 8; j++)
             {
-                Piece piece = _board[i, j];
-                if (piece != null && piece.Side != (Side)_currentPlayer)
+                Vector2Int startPosition = new Vector2Int(j, i);
+                if (position == startPosition) continue;
+                if (IsEmptyCell(startPosition)) continue;
+                Piece piece = GetPieceAtPosition(startPosition);
+                if (piece.Side != (Side)_currentPlayer)
                 {
+                    if (piece.GetType() == typeof(King)) continue;
                     Move lastMove = GetLastMove();
-                    bool canMove = piece.MovePiece(new Vector2Int(j, i), position, _board, lastMove);
-                    bool canCapture = piece.CanCapture(new Vector2Int(j, i), position, _board);
+                    bool canMove = piece.MovePiece(startPosition, position, this);
+                    bool canCapture = piece.CanCapture(startPosition, position, this);
                     if (canMove && canCapture) // It is attacked cell
                     {
                         return true;

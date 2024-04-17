@@ -2,7 +2,7 @@
 
 public class Bishop : Piece
 {
-    public override bool CanCapture(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board)
+    public override bool CanCapture(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {
         int startX = Mathf.RoundToInt(startPosition.x);
         int startY = Mathf.RoundToInt(startPosition.y);
@@ -10,7 +10,8 @@ public class Bishop : Piece
         int endY = Mathf.RoundToInt(endPosition.y);
         return Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY) && !(startX == endX && startY == endY);
     }
-    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board, Move lastMove)
+
+    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {
         int startX = Mathf.RoundToInt(startPosition.x);
         int startY = Mathf.RoundToInt(startPosition.y);
@@ -33,14 +34,14 @@ public class Bishop : Piece
             int y = startY + deltaY;
             while (x != endX && y != endY)
             {
-                if (board[y, x] != null)
+                if (board.GameBoard[y, x] != null)
                 {
-                    if (board[y, x].Side == Side)
+                    if (board.GameBoard[y, x].Side == Side)
                     {
                         Debug.Log("There is a piece blocking the bishop's path by own piece");
                         return false;
                     }
-                    else if (board[y, x].Side == 1 - Side && x != endX && y != endY)
+                    else if (board.GameBoard[y, x].Side == 1 - Side && x != endX && y != endY)
                     {
                         Debug.Log("There is a piece blocking the bishop's path by enemy piece");
                         return false;
@@ -49,7 +50,7 @@ public class Bishop : Piece
                 x += deltaX;
                 y += deltaY;
             }
-            if (board[endY, endX] == null || board[endY, endX].Side != this.Side)
+            if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
             {
                 Debug.Log("Valid move for the bishop.");
                 return true;

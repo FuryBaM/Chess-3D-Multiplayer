@@ -2,7 +2,7 @@
 
 public class Rook : Piece
 {
-    public override bool CanCapture(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board)
+    public override bool CanCapture(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {
         int startX = Mathf.RoundToInt(startPosition.x);
         int startY = Mathf.RoundToInt(startPosition.y);
@@ -10,7 +10,7 @@ public class Rook : Piece
         int endY = Mathf.RoundToInt(endPosition.y);
         return (startX == endX || startY == endY) && !(startX == endX && startY == endY);
     }
-    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Piece[,] board, Move lastMove)
+    public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {
         int startX = Mathf.RoundToInt(startPosition.x);
         int startY = Mathf.RoundToInt(startPosition.y);
@@ -22,7 +22,6 @@ public class Rook : Piece
         }
         if (startPosition == endPosition)
         {
-            Debug.Log("Start and end positions are the same.");
             return false;
         }
         if (startX == endX || startY == endY)
@@ -33,36 +32,31 @@ public class Rook : Piece
             int y = startY + deltaY;
             while (x != endX || y != endY)
             {
-                if (board[y, x] != null)
+                if (board.GameBoard[y, x] != null)
                 {
-                    if (board[y, x].Side == Side)
+                    if (board.GameBoard[y, x].Side == Side)
                     {
-                        Debug.Log("There is a piece blocking the rook's path by own piece");
                         return false;
                     }
-                    else if (board[y, x].Side == 1 - Side && x != endX && y != endY)
+                    else if (board.GameBoard[y, x].Side == 1 - Side && x != endX && y != endY)
                     {
-                        Debug.Log("There is a piece blocking the rook's path by enemy piece");
                         return false;
                     }
                 }
                 x += deltaX;
                 y += deltaY;
             }
-            if (board[endY, endX] == null || board[endY, endX].Side != this.Side)
+            if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
             {
-                Debug.Log("Valid move for the rook.");
                 return true;
             }
             else
             {
-                Debug.Log("Target position is occupied by own piece.");
                 return false;
             }
         }
         else
         {
-            Debug.Log("Invalid move for the rook.");
             return false;
         }
     }

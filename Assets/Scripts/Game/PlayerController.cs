@@ -8,6 +8,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Material _outline;
     private Piece _selectedPiece = null;
     [SerializeField] private Side _player = Side.white;
+    [SerializeField] private LayerMask _whatIsSelectable;
     private void Update()
     {
         if (_selectedPiece == null)
@@ -29,14 +30,23 @@ public class PlayerController : MonoBehaviour
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
-            LayerMask pieceLayerMask = LayerMask.GetMask("Piece");
-            if (Physics.Raycast(ray, out hit, pieceLayerMask))
+            if (Physics.Raycast(ray, out hit, _whatIsSelectable))
             {
                 if (hit.collider.gameObject.CompareTag("Piece"))
                 {
                     _selectedPiece = hit.collider.GetComponent<Piece>();
-                    _selectedPiece.GetComponent<MeshRenderer>().materials = new Material[] { _selectedPiece.GetComponent<MeshRenderer>().materials[0], _outline };
-                    HighlightPossibleMoves(board.GetPiecePosition(_selectedPiece));
+                    HighlightPiece();
+                }
+                else if (hit.collider.gameObject.CompareTag("Board"))
+                {
+                    Board board = hit.collider.GetComponent<Board>();
+                    Vector2Int position = new Vector2Int(Mathf.RoundToInt(hit.point.x), Mathf.RoundToInt(hit.point.z));
+                    Piece piece = board.GetPieceAtPosition(position);
+                    if (piece)
+                    {
+                        _selectedPiece = piece;
+                        HighlightPiece();
+                    }
                 }
             }
         }
@@ -50,6 +60,11 @@ public class PlayerController : MonoBehaviour
         _selectedPiece = null;
         board.UnhighlightAllCells();
     }
+    public void HighlightPiece()
+    {
+        _selectedPiece.GetComponent<MeshRenderer>().materials = new Material[] { _selectedPiece.GetComponent<MeshRenderer>().materials[0], _outline };
+        HighlightPossibleMoves(board.GetPiecePosition(_selectedPiece));
+    }
     private void HighlightPossibleMoves(Vector2Int position)
     {
         for (int y = 0; y < 8; y++)
@@ -58,9 +73,17 @@ public class PlayerController : MonoBehaviour
             {
                 Vector2Int targetPosition = new Vector2Int(x, y);
                 Move lastMove = board.GetLastMove();
-                if (_selectedPiece.MovePiece(position, targetPosition, board.GameBoard,lastMove))
+                if (_selectedPiece.MovePiece(position, targetPosition, board))
                 {
-                    board.HighlightCell(targetPosition);
+                    bool isPawn = _selectedPiece.GetType() == typeof(Pawn) && _selectedPiece.CanCapture(position, targetPosition, board);
+                    if (!board.IsEmptyCell(targetPosition) && _selectedPiece.Side != board.GetPieceAtPosition(targetPosition).Side || isPawn)
+                    {
+                        board.HighlightCell(targetPosition, true);
+                    }
+                    else
+                    {
+                        board.HighlightCell(targetPosition, false);
+                    }
                 }
             }
         }
