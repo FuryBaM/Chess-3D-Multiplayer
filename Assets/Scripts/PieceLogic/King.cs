@@ -8,7 +8,7 @@ public class King : Piece
         int startY = Mathf.RoundToInt(myPiecePosition.y);
         int endX = Mathf.RoundToInt(opponentPiecePosition.x);
         int endY = Mathf.RoundToInt(opponentPiecePosition.y);
-        return Mathf.Abs(endX - startX) <= 1 && Mathf.Abs(endY - startY) <= 1;
+        return Mathf.Abs(endX - startX) <= 1 && Mathf.Abs(endY - startY) <= 1 && board.GetPieceAtPosition(opponentPiecePosition).Side != Side;
     }
 
     public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)
@@ -20,7 +20,7 @@ public class King : Piece
 
         if (!Board.IsPositionInBounds(startPosition) || !Board.IsPositionInBounds(endPosition)) return false;
         if (startPosition == endPosition) return false;
-        if (board.IsAttackedCell(endPosition))
+        if (board.IsAttackedCell(this, endPosition))
         {
             return false;
         }

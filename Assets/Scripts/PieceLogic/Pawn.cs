@@ -17,11 +17,11 @@ public class Pawn : Piece
             if (board.GameBoard[endY, endX] == null) return false;
             if (Side == Side.white)
             {
-                return endY > startY;
+                return endY > startY && board.GetPieceAtPosition(opponentPiecePosition).Side != Side;
             }
             else
             {
-                return endY < startY;
+                return endY < startY && board.GetPieceAtPosition(opponentPiecePosition).Side != Side;
             }
         }
         return false;

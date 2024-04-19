@@ -43,9 +43,9 @@
      <Compile Include="Assets\Scripts\PieceLogic\Pawn.cs" />
      <Compile Include="Assets\Scripts\PieceLogic\Knight.cs" />
      <Compile Include="Assets\Scripts\PieceLogic\King.cs" />
+     <Compile Include="Assets\Scripts\Game\Move.cs" />
      <Compile Include="Assets\Scripts\Game\PlayerController.cs" />
      <Compile Include="Assets\Scripts\PieceLogic\Bishop.cs" />
-     <Compile Include="Assets\Scripts\Game\Move.cs" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_SDF-Mobile Overlay.shader" />
      <None Include="Assets\TextMesh Pro\Shaders\TMP_Bitmap.shader" />

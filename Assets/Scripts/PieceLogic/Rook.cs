@@ -8,7 +8,7 @@ public class Rook : Piece
         int startY = Mathf.RoundToInt(startPosition.y);
         int endX = Mathf.RoundToInt(endPosition.x);
         int endY = Mathf.RoundToInt(endPosition.y);
-        return (startX == endX || startY == endY) && !(startX == endX && startY == endY);
+        return (startX == endX || startY == endY) && !(startX == endX && startY == endY) && board.GetPieceAtPosition(endPosition).Side != Side;
     }
     public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {

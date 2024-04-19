@@ -214,9 +214,11 @@ public class Board : MonoBehaviour
             return false;
         }
 
+        bool isCheck = IsKingInCheck((Side)_currentPlayer);
+
         bool canMove = false;
         // Check castling
-        if (piece.GetType() == typeof(King) && Mathf.Abs(endPosition.x - startPosition.x) > 1 && endPosition.y == startPosition.y)
+        if (piece.GetType() == typeof(King) && Mathf.Abs(endPosition.x - startPosition.x) > 1 && endPosition.y == startPosition.y && !isCheck)
         {
             canMove = Castle(endPosition.x > startPosition.x);
             if (canMove)
@@ -250,24 +252,24 @@ public class Board : MonoBehaviour
 
         if (!canMove) return false;
 
-        if (piece.GetType() == typeof(King) && IsAttackedCell(endPosition))
-        {
-            return false;
-        }
-
         if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, this) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
         {
             Destroy(_board[endPosition.y, endPosition.x].gameObject);
             Debug.Log("Captured a piece");
         }
-
-        StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
-        _movedPieces.Add(piece);
+        Piece[,] clone = GameBoard;
         _board[endPosition.y, endPosition.x] = piece;
         _board[startPosition.y, startPosition.x] = null;
+        if (IsKingInCheck((Side)_currentPlayer))
+        {
+            _board = clone;
+            return false;
+        }
+        _movedPieces.Add(piece);
         _currentPlayer = 1 - _currentPlayer;
         _currentMove++;
         _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
+        StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
         return true;
     }
 
@@ -297,7 +299,7 @@ public class Board : MonoBehaviour
         Vector2Int kingStartPosition = new Vector2Int(kingStartFile, rank);
         Vector2Int kingEndPosition = new Vector2Int(kingEndFile, rank);
 
-        if (IsAttackedCell(kingStartPosition) || IsAttackedCell(kingEndPosition))
+        if (IsAttackedCell(king, kingStartPosition) || IsAttackedCell(king, kingEndPosition))
         {
             Debug.Log("Cannot castle: king would move through or into an attacked square.");
             return false;
@@ -343,6 +345,62 @@ public class Board : MonoBehaviour
             }
         }
         return false;
+    }
+
+    public bool IsAttackedCell(Piece attackedPiece, Vector2Int position)
+    {
+        if (!IsPositionInBounds(position)) return false;
+        Piece originalPiece = GetPieceAtPosition(position);
+        _board[position.y, position.x] = attackedPiece;
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                Vector2Int startPosition = new Vector2Int(j, i);
+                if (position == startPosition) continue;
+                if (IsEmptyCell(startPosition)) continue;
+                Piece piece = GetPieceAtPosition(startPosition);
+                if (piece.Side != attackedPiece.Side)
+                {
+                    if (piece.GetType() == typeof(King)) continue;
+                    Move lastMove = GetLastMove();
+                    bool canMove = piece.MovePiece(startPosition, position, this);
+                    bool canCapture = piece.CanCapture(startPosition, position, this);
+                    if (canMove && canCapture) // It is attacked cell
+                    {
+                        _board[position.y, position.x] = originalPiece;
+                        return true;
+                    }
+                }
+            }
+        }
+        _board[position.y, position.x] = originalPiece;
+        return false;
+    }
+    private bool IsKingInCheck(Side side)
+    {
+        Piece king = FindKing(side);
+        Vector2Int kingPosition = GetPiecePosition(king);
+        return IsAttackedCell(king, kingPosition);
+    }
+
+    private Piece FindKing(Side side)
+    {
+        Piece king = null;
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 0; j < 8; j++)
+            {
+                Piece piece = _board[i, j];
+                if (piece == null) continue;
+                else if (piece != null && piece.Side == side && piece.GetType() == typeof(King))
+                {
+                    king = piece;
+                    break;
+                }
+            }
+        }
+        return king;
     }
 
     [CustomEditor(typeof(Board))]

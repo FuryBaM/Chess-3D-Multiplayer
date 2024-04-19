@@ -10,7 +10,7 @@ public class Knight : Piece
         int endY = Mathf.RoundToInt(endPosition.y);
         int dx = Mathf.Abs(endX - startX);
         int dy = Mathf.Abs(endY - startY);
-        return (dx == 2 && dy == 1) || (dx == 1 && dy == 2);
+        return ((dx == 2 && dy == 1) || (dx == 1 && dy == 2)) && board.GetPieceAtPosition(endPosition).Side != Side;
     }
 
     public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)
