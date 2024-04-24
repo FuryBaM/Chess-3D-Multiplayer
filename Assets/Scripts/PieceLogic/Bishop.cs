@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
-public class Bishop : Piece
+public sealed class Bishop : Piece
 {
     public override bool CanCapture(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {
@@ -67,5 +68,40 @@ public class Bishop : Piece
             return false;
         }
     }
+    public override List<Vector2Int> GetPossibleMoves(Vector2Int currentPosition, Board board)
+    {
+        List<Vector2Int> possibleMoves = new List<Vector2Int>();
 
+        int startX = Mathf.RoundToInt(currentPosition.x);
+        int startY = Mathf.RoundToInt(currentPosition.y);
+
+        for (int deltaX = -1; deltaX <= 1; deltaX += 2)
+        {
+            for (int deltaY = -1; deltaY <= 1; deltaY += 2)
+            {
+                int x = startX + deltaX;
+                int y = startY + deltaY;
+
+                while (Board.IsPositionInBounds(new Vector2Int(x, y)))
+                {
+                    if (board.GetPieceAtPosition(new Vector2Int(x, y)) == null ||
+                        board.GetPieceAtPosition(new Vector2Int(x, y)).Side != Side)
+                    {
+                        Vector2Int endPosition = new Vector2Int(x, y);
+                        if (MovePiece(currentPosition, endPosition, board))
+                        {
+                            possibleMoves.Add(endPosition);
+                        }
+                    }
+                    if (board.GetPieceAtPosition(new Vector2Int(x, y)) != null)
+                    {
+                        break;
+                    }
+                    x += deltaX;
+                    y += deltaY;
+                }
+            }
+        }
+        return possibleMoves;
+    }
 }

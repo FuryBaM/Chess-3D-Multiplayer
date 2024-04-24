@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public enum Side
 {
@@ -14,4 +15,5 @@ public abstract class Piece : MonoBehaviour
     {
         return true;
     }
+    public abstract List<Vector2Int> GetPossibleMoves(Vector2Int currentPosition, Board board);
 }

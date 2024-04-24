@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
-public class Knight : Piece
+public sealed class Knight : Piece
 {
     public override bool CanCapture(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {
@@ -45,4 +46,38 @@ public class Knight : Piece
             return false;
         }
     }
+    public override List<Vector2Int> GetPossibleMoves(Vector2Int currentPosition, Board board)
+    {
+        List<Vector2Int> possibleMoves = new List<Vector2Int>();
+
+        // Определяем начальные координаты
+        int startX = Mathf.RoundToInt(currentPosition.x);
+        int startY = Mathf.RoundToInt(currentPosition.y);
+
+        // Задаем возможные направления хода коня
+        int[] dx = { 1, 1, 2, 2, -1, -1, -2, -2 };
+        int[] dy = { 2, -2, 1, -1, 2, -2, 1, -1 };
+
+        // Проверяем каждое направление хода коня
+        for (int i = 0; i < dx.Length; i++)
+        {
+            int newX = startX + dx[i];
+            int newY = startY + dy[i];
+
+            // Проверяем, находится ли новая позиция в пределах доски
+            if (Board.IsPositionInBounds(new Vector2Int(newX, newY)))
+            {
+                Piece pieceAtNewPosition = board.GetPieceAtPosition(new Vector2Int(newX, newY));
+
+                // Проверяем, свободна ли клетка или стоит на ней вражеская фигура
+                if (pieceAtNewPosition == null || pieceAtNewPosition.Side != Side)
+                {
+                    possibleMoves.Add(new Vector2Int(newX, newY));
+                }
+            }
+        }
+
+        return possibleMoves;
+    }
+
 }

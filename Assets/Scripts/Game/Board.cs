@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 
-public class Board : MonoBehaviour
+public sealed class Board : MonoBehaviour
 {
     private Piece[,] _board = new Piece[8, 8];
     public Piece[,] GameBoard 
@@ -24,7 +25,26 @@ public class Board : MonoBehaviour
     }
     private int _currentMove = 1;
     private HashSet<Piece> _movedPieces = new HashSet<Piece>();
+    public IList<Piece> MovedPieces
+    {
+        get 
+        {
+            return _movedPieces.ToList();
+        }
+    }
     private List<Move> _movesHistory = new List<Move>();
+    private bool _isGameOver = false;
+    private bool IsGameOver
+    {
+        get
+        {
+            return _isGameOver;
+        }
+    }
+
+    public UnityEvent OnCheck;
+    public UnityEvent OnMate;
+    public UnityEvent OnStalemate;
     [Header("Piece Movement")]
     [SerializeField] private float _moveDuration = 1f;
     [SerializeField] private AnimationCurve _pieceMovementCurve;
@@ -208,6 +228,7 @@ public class Board : MonoBehaviour
 
     public bool MakeMove(Piece piece, Vector2Int startPosition, Vector2Int endPosition)
     {
+        if (_isGameOver == true) return false;
         if (((int)piece.Side) != _currentPlayer)
         { 
             Debug.Log($"It's not your turn! Makes move {Enum.ToObject(typeof(Side), 1 - piece.Side).ToString()}");
@@ -217,7 +238,6 @@ public class Board : MonoBehaviour
         bool isCheck = IsKingInCheck((Side)_currentPlayer);
 
         bool canMove = false;
-        // Check castling
         if (piece.GetType() == typeof(King) && Mathf.Abs(endPosition.x - startPosition.x) > 1 && endPosition.y == startPosition.y && !isCheck)
         {
             canMove = Castle(endPosition.x > startPosition.x);
@@ -226,13 +246,13 @@ public class Board : MonoBehaviour
                 return true;
             }
         }
-        else // Or check the move
+        else
         {
             Move lastMove = _movesHistory.Count > 0 ? _movesHistory[_movesHistory.Count - 1] : null;
             canMove = piece.MovePiece(startPosition, endPosition, this);
         }
 
-        if (piece.GetType() == typeof(Pawn)) // Check if its enpassant
+        if (piece.GetType() == typeof(Pawn))
         {
             Move lastMove = _movesHistory.Count > 0 ? _movesHistory[_movesHistory.Count - 1] : null;
             if (_movesHistory.Count > 0 && piece.GetComponent<Pawn>().IsEnPassant(startPosition, endPosition, lastMove))
@@ -250,27 +270,64 @@ public class Board : MonoBehaviour
             }
         }
 
-        if (!canMove) return false;
-
         if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, this) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
         {
-            Destroy(_board[endPosition.y, endPosition.x].gameObject);
+            Piece[,] cloneBoard = GameBoard;
+            _board[endPosition.y, endPosition.x] = piece;
+            _board[startPosition.y, startPosition.x] = null;
+            if (!IsKingInCheck((Side)_currentPlayer))
+            {
+                _board = cloneBoard;
+               Destroy(_board[endPosition.y, endPosition.x].gameObject);
+            }
+            else
+            {
+                _board = cloneBoard;
+            }
             Debug.Log("Captured a piece");
         }
+
+        if (!canMove) return false;
         Piece[,] clone = GameBoard;
         _board[endPosition.y, endPosition.x] = piece;
         _board[startPosition.y, startPosition.x] = null;
+        
         if (IsKingInCheck((Side)_currentPlayer))
         {
             _board = clone;
             return false;
         }
+
         _movedPieces.Add(piece);
         _currentPlayer = 1 - _currentPlayer;
         _currentMove++;
         _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
+
+        isCheck = IsKingInCheck((Side)_currentPlayer);
+        if (isCheck && FindKing((Side)_currentPlayer).GetPossibleMoves(startPosition, this).Count == 0)
+        {
+            _isGameOver = true;
+            OnMate?.Invoke();
+            return false;
+        }
+        else if (isCheck)
+        {
+            OnCheck?.Invoke();
+        }
+        else if (!isCheck && AllPiecesHaveNoMoves((Side)_currentPlayer))
+        {
+            _isGameOver = true;
+            OnStalemate?.Invoke();
+            return false;
+        }
+
         return true;
+    }
+
+    private bool AllPiecesHaveNoMoves(Side currentPlayer)
+    {
+        throw new NotImplementedException();
     }
 
     public bool Castle(bool isShortCastle)
@@ -318,7 +375,7 @@ public class Board : MonoBehaviour
         _movesHistory.Add(new Move(king, true, new Vector2Int(kingStartFile, rank), new Vector2Int(kingEndFile, rank)));
         return true;
     }
-    public bool IsEmptyCell(Vector2Int position) => _board[position.y, position.x] == null;
+    public bool IsEmptyCell(Vector2Int position) => !Board.IsPositionInBounds(position) || _board[position.y, position.x] == null;
 
     public bool IsAttackedCell(Vector2Int position)
     {
@@ -403,19 +460,19 @@ public class Board : MonoBehaviour
         return king;
     }
 
-    [CustomEditor(typeof(Board))]
-    public class customButton : Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            DrawDefaultInspector();
+    // [CustomEditor(typeof(Board))]
+    // public class customButton : Editor
+    // {
+    //     public override void OnInspectorGUI()
+    //     {
+    //         DrawDefaultInspector();
 
-            Board myScript = (Board)target;
-            if (GUILayout.Button("Import FEN"))
-            {
-                myScript.ImportFEN(myScript.fen);
-            }
-        }
-    }
+    //         Board myScript = (Board)target;
+    //         if (GUILayout.Button("Import FEN"))
+    //         {
+    //             myScript.ImportFEN(myScript.fen);
+    //         }
+    //     }
+    // }
 }
 

@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using UnityEngine;
 using System;
-public class Move
+public sealed class Move
 {
     public Piece MovedPiece { get; }
     public bool Castle { get; }
