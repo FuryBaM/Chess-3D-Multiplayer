@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
-
 public sealed class Board : MonoBehaviour
 {
     private Piece[,] _board = new Piece[8, 8];
@@ -45,6 +44,7 @@ public sealed class Board : MonoBehaviour
     public UnityEvent OnCheck;
     public UnityEvent OnMate;
     public UnityEvent OnStalemate;
+    public UnityEvent OnMakeMove;
     [Header("Piece Movement")]
     [SerializeField] private float _moveDuration = 1f;
     [SerializeField] private AnimationCurve _pieceMovementCurve;
@@ -71,6 +71,7 @@ public sealed class Board : MonoBehaviour
     private void Start()
     {
         ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        OnMakeMove.AddListener(OnMove);
     }
     public static bool IsPositionInBounds(Vector2 position) => !(position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8);
     public void ClearBoard()
@@ -163,6 +164,7 @@ public sealed class Board : MonoBehaviour
             }
         }
     }
+    
     private Piece SpawnPieceByChar(char fenChar)
     {
         Piece piece = null;
@@ -210,6 +212,80 @@ public sealed class Board : MonoBehaviour
         return piece;
     }
 
+    private const string FEN_PIECE_MAPPING = "KQRBNPkqrbnp";
+
+    public string GetFEN()
+    {
+        string fen = "";
+        for (int rank = 7; rank >= 0; rank--)
+        {
+            int emptySquaresCount = 0;
+            for (int file = 0; file < 8; file++)
+            {
+                Piece piece = _board[rank, file];
+
+                if (piece == null)
+                {
+                    emptySquaresCount++;
+                }
+                else
+                {
+                    if (emptySquaresCount > 0)
+                    {
+                        fen += emptySquaresCount;
+                        emptySquaresCount = 0;
+                    }
+                    char pieceChar = FEN_PIECE_MAPPING[(int)piece.Side * 6 + GetPieceIndex(piece)];
+                    fen += pieceChar;
+                }
+            }
+            if (emptySquaresCount > 0)
+            {
+                fen += emptySquaresCount;
+            }
+            if (rank > 0)
+            {
+                fen += "/";
+            }
+        }
+
+        return fen;
+    }
+
+    public Move ConvertStringToMove(string moveString)
+    {
+        if (moveString.Length != 4)
+        {
+            Debug.LogError("Invalid move string format. Must be in the format 'startEnd', e.g., 'd8g5'.");
+            return null;
+        }
+        int startFile = moveString[0] - 'a';
+        int startRank = int.Parse(moveString[1].ToString()) - 1;
+        int endFile = moveString[2] - 'a';
+        int endRank = int.Parse(moveString[3].ToString()) - 1;
+        if (!IsPositionInBounds(new Vector2Int(startFile, startRank)) ||
+            !IsPositionInBounds(new Vector2Int(endFile, endRank)))
+        {
+            Debug.LogError("Invalid move string. Positions are out of bounds.");
+            return null;
+        }
+        Vector2Int startPosition = new Vector2Int(startFile, startRank);
+        Vector2Int endPosition = new Vector2Int(endFile, endRank);
+        return new Move(GetPieceAtPosition(startPosition), false, startPosition, endPosition);
+    }
+
+    private int GetPieceIndex(Piece piece)
+    {
+        if (piece is King) return 0;
+        if (piece is Queen) return 1;
+        if (piece is Rook) return 2;
+        if (piece is Bishop) return 3;
+        if (piece is Knight) return 4;
+        if (piece is Pawn) return 5;
+        return -1;
+    }
+
+
     public IEnumerator MovePieceSmoothly(Piece piece, Vector2Int startPosition, Vector2Int endPosition, float moveDuration, AnimationCurve curve)
     {
         Vector3 start = new Vector3(startPosition.x, 0, startPosition.y);
@@ -243,6 +319,7 @@ public sealed class Board : MonoBehaviour
             canMove = Castle(endPosition.x > startPosition.x);
             if (canMove)
             {
+                OnMakeMove?.Invoke();
                 return true;
             }
         }
@@ -266,6 +343,7 @@ public sealed class Board : MonoBehaviour
                 _currentPlayer = 1 - _currentPlayer;
                 _currentMove++;
                 _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
+                OnMakeMove?.Invoke();
                 return true;
             }
         }
@@ -303,13 +381,18 @@ public sealed class Board : MonoBehaviour
         _currentMove++;
         _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
+        OnMakeMove?.Invoke();
+        return true;
+    }
 
-        isCheck = IsKingInCheck((Side)_currentPlayer);
-        if (isCheck && FindKing((Side)_currentPlayer).GetPossibleMoves(startPosition, this).Count == 0)
+    private void OnMove()
+    {
+        bool isCheck = IsKingInCheck((Side)_currentPlayer);
+        Piece king = FindKing((Side)_currentPlayer);
+        if (isCheck && king.GetPossibleMoves(GetPiecePosition(king), this).Count == 0)
         {
             _isGameOver = true;
             OnMate?.Invoke();
-            return false;
         }
         else if (isCheck)
         {
@@ -319,16 +402,29 @@ public sealed class Board : MonoBehaviour
         {
             _isGameOver = true;
             OnStalemate?.Invoke();
-            return false;
         }
-
-        return true;
     }
 
     private bool AllPiecesHaveNoMoves(Side currentPlayer)
     {
-        throw new NotImplementedException();
+        for (int i = 0; i < _board.GetLength(0); i++)
+        {
+            for (int j = 0; j < _board.GetLength(1); j++)
+            {
+                Piece piece = _board[i, j];
+                if (piece != null && piece.Side == currentPlayer)
+                {
+                    List<Vector2Int> possibleMoves = piece.GetPossibleMoves(new Vector2Int(j, i), this);
+                    if (possibleMoves.Count > 0)
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
     }
+
 
     public bool Castle(bool isShortCastle)
     {
@@ -458,6 +554,13 @@ public sealed class Board : MonoBehaviour
             }
         }
         return king;
+    }
+
+    private void OnDisable()
+    {
+        OnCheck.RemoveAllListeners();
+        OnMate.RemoveAllListeners();
+        OnStalemate.RemoveAllListeners();
     }
 
     // [CustomEditor(typeof(Board))]

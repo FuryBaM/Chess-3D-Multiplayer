@@ -82,66 +82,61 @@ public sealed class Queen : Piece
         // Добавляем возможные ходы для ладьи (по вертикали и горизонтали)
         for (int x = startX - 1; x >= 0; x--)
         {
-            if (!AddMoveIfValid(new Vector2Int(x, startY), possibleMoves, board))
+            if (!AddMoveIfValid(currentPosition, new Vector2Int(x, startY), possibleMoves, board))
                 break;
         }
         for (int x = startX + 1; x < width; x++)
         {
-            if (!AddMoveIfValid(new Vector2Int(x, startY), possibleMoves, board))
+            if (!AddMoveIfValid(currentPosition, new Vector2Int(x, startY), possibleMoves, board))
                 break;
         }
         for (int y = startY - 1; y >= 0; y--)
         {
-            if (!AddMoveIfValid(new Vector2Int(startX, y), possibleMoves, board))
+            if (!AddMoveIfValid(currentPosition, new Vector2Int(startX, y), possibleMoves, board))
                 break;
         }
         for (int y = startY + 1; y < height; y++)
         {
-            if (!AddMoveIfValid(new Vector2Int(startX, y), possibleMoves, board))
+            if (!AddMoveIfValid(currentPosition, new Vector2Int(startX, y), possibleMoves, board))
                 break;
         }
 
         // Добавляем возможные ходы для слона (по диагонали)
         for (int d = 1; startX - d >= 0 && startY - d >= 0; d++)
         {
-            if (!AddMoveIfValid(new Vector2Int(startX - d, startY - d), possibleMoves, board))
+            if (!AddMoveIfValid(currentPosition, new Vector2Int(startX - d, startY - d), possibleMoves, board))
                 break;
         }
         for (int d = 1; startX - d >= 0 && startY + d < height; d++)
         {
-            if (!AddMoveIfValid(new Vector2Int(startX - d, startY + d), possibleMoves, board))
+            if (!AddMoveIfValid(currentPosition, new Vector2Int(startX - d, startY + d), possibleMoves, board))
                 break;
         }
         for (int d = 1; startX + d < width && startY - d >= 0; d++)
         {
-            if (!AddMoveIfValid(new Vector2Int(startX + d, startY - d), possibleMoves, board))
+            if (!AddMoveIfValid(currentPosition, new Vector2Int(startX + d, startY - d), possibleMoves, board))
                 break;
         }
         for (int d = 1; startX + d < width && startY + d < height; d++)
         {
-            if (!AddMoveIfValid(new Vector2Int(startX + d, startY + d), possibleMoves, board))
+            if (!AddMoveIfValid(currentPosition, new Vector2Int(startX + d, startY + d), possibleMoves, board))
                 break;
         }
 
         return possibleMoves;
     }
 
-    private bool AddMoveIfValid(Vector2Int position, List<Vector2Int> possibleMoves, Board board)
+    private bool AddMoveIfValid(Vector2Int startPosition, Vector2Int position, List<Vector2Int> possibleMoves, Board board)
     {
         if (!Board.IsPositionInBounds(position))
             return false;
 
         Piece piece = board.GetPieceAtPosition(position);
-        if (piece == null)
+        if (MovePiece(startPosition, position, board))
         {
             possibleMoves.Add(position);
             return true;
         }
-        else if (piece.Side != Side)
-        {
-            possibleMoves.Add(position);
-        }
         return false;
     }
-
 }

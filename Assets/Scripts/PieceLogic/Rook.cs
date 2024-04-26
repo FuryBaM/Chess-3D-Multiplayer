@@ -9,8 +9,10 @@ public sealed class Rook : Piece
         int startY = Mathf.RoundToInt(startPosition.y);
         int endX = Mathf.RoundToInt(endPosition.x);
         int endY = Mathf.RoundToInt(endPosition.y);
-        return (startX == endX || startY == endY) && !(startX == endX && startY == endY) && board.GetPieceAtPosition(endPosition).Side != Side;
+        bool friendlyFire = board.GameBoard[endY, endX] != null && board.GameBoard[endY, endX].Side == Side;
+        return (startX == endX || startY == endY) && !(startX == endX && startY == endY) && board.GetPieceAtPosition(endPosition).Side != Side && !friendlyFire;
     }
+
     public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {
         int startX = Mathf.RoundToInt(startPosition.x);
@@ -37,10 +39,12 @@ public sealed class Rook : Piece
                 {
                     if (board.GameBoard[y, x].Side == Side)
                     {
+                        Debug.Log("There is a piece blocking the rook's path by own piece");
                         return false;
                     }
-                    else if (board.GameBoard[y, x].Side == 1 - Side && x != endX && y != endY)
+                    else if (board.GameBoard[y, x].Side == 1 - Side)
                     {
+                        Debug.Log("There is a piece blocking the rook's path by enemy piece");
                         return false;
                     }
                 }
@@ -49,69 +53,66 @@ public sealed class Rook : Piece
             }
             if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
             {
+                Debug.Log("Valid move for the rook.");
                 return true;
             }
             else
             {
+                Debug.Log("Target position is occupied by own piece.");
                 return false;
             }
         }
         else
         {
+            Debug.Log("Invalid move for the rook.");
             return false;
         }
     }
+
     public override List<Vector2Int> GetPossibleMoves(Vector2Int currentPosition, Board board)
     {
         List<Vector2Int> possibleMoves = new List<Vector2Int>();
 
-        // Определяем начальные координаты
+        // Define initial coordinates
         int startX = Mathf.RoundToInt(currentPosition.x);
         int startY = Mathf.RoundToInt(currentPosition.y);
-        int width = board.GameBoard.GetLength(1);
-        int height = board.GameBoard.GetLength(0);
 
-        // Добавляем возможные ходы для ладьи (по вертикали и горизонтали)
-        for (int x = startX - 1; x >= 0; x--)
-        {
-            if (!AddMoveIfValid(new Vector2Int(x, startY), possibleMoves, board))
-                break;
-        }
-        for (int x = startX + 1; x < width; x++)
-        {
-            if (!AddMoveIfValid(new Vector2Int(x, startY), possibleMoves, board))
-                break;
-        }
-        for (int y = startY - 1; y >= 0; y--)
-        {
-            if (!AddMoveIfValid(new Vector2Int(startX, y), possibleMoves, board))
-                break;
-        }
-        for (int y = startY + 1; y < height; y++)
-        {
-            if (!AddMoveIfValid(new Vector2Int(startX, y), possibleMoves, board))
-                break;
-        }
+        // Add possible moves for the rook (horizontally and vertically)
+        AddMovesInDirection(startX, startY, 1, 0, possibleMoves, board); // Right
+        AddMovesInDirection(startX, startY, -1, 0, possibleMoves, board); // Left
+        AddMovesInDirection(startX, startY, 0, 1, possibleMoves, board); // Up
+        AddMovesInDirection(startX, startY, 0, -1, possibleMoves, board); // Down
 
         return possibleMoves;
     }
 
-    private bool AddMoveIfValid(Vector2Int position, List<Vector2Int> possibleMoves, Board board)
+    private void AddMovesInDirection(int startX, int startY, int deltaX, int deltaY, List<Vector2Int> possibleMoves, Board board)
     {
-        if (!Board.IsPositionInBounds(position))
-            return false;
+        int x = startX + deltaX;
+        int y = startY + deltaY;
 
-        Piece piece = board.GetPieceAtPosition(position);
-        if (piece == null)
+        while (Board.IsPositionInBounds(new Vector2Int(x, y)))
         {
-            possibleMoves.Add(position);
-            return true;
+            Vector2Int newPosition = new Vector2Int(x, y);
+
+            // Check if the move is legal
+            if (MovePiece(new Vector2Int(startX, startY), newPosition, board))
+            {
+                possibleMoves.Add(newPosition);
+
+                // If the position is occupied, stop further moves in this direction
+                if (board.GameBoard[y, x] != null)
+                    break;
+            }
+            else
+            {
+                // If the move is illegal, stop further moves in this direction
+                break;
+            }
+
+            // Move to the next position
+            x += deltaX;
+            y += deltaY;
         }
-        else if (piece.Side != Side)
-        {
-            possibleMoves.Add(position);
-        }
-        return false;
     }
-
 }

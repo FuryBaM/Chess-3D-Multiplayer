@@ -90,6 +90,7 @@ public sealed class PlayerController : MonoBehaviour
     }
     private void MovePieceToMouse()
     {
+        if (_selectedPiece == null) return;
         Vector2Int movePosition;
         Vector2Int startPosition = new Vector2Int(Mathf.RoundToInt(_selectedPiece.transform.position.x), Mathf.RoundToInt(_selectedPiece.transform.position.z));
         if (Input.GetMouseButtonDown(0))
