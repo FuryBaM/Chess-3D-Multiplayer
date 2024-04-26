@@ -92,52 +92,31 @@ public sealed class King : Piece
     {
         List<Vector2Int> possibleMoves = new List<Vector2Int>();
 
-        // Определяем начальные координаты
         int startX = Mathf.RoundToInt(currentPosition.x);
         int startY = Mathf.RoundToInt(currentPosition.y);
 
-        // Проверяем все клетки вокруг короля (в том числе и по диагонали)
         for (int deltaX = -1; deltaX <= 1; deltaX++)
         {
             for (int deltaY = -1; deltaY <= 1; deltaY++)
             {
-                // Исключаем клетку, на которой стоит сам король
                 if (deltaX == 0 && deltaY == 0)
                 {
                     continue;
                 }
 
-                // Вычисляем координаты новой позиции
                 int newX = startX + deltaX;
                 int newY = startY + deltaY;
 
-                // Проверяем, находится ли новая позиция в пределах доски
                 if (Board.IsPositionInBounds(new Vector2Int(newX, newY)))
                 {
                     Piece pieceAtNewPosition = board.GetPieceAtPosition(new Vector2Int(newX, newY));
-
-                    // Проверяем, свободна ли клетка или стоит на ней вражеская фигура
-                    if (pieceAtNewPosition == null || pieceAtNewPosition.Side != Side)
+                    Vector2Int endPosition = new Vector2Int(newX, newY);
+                    if (MovePiece(currentPosition, endPosition, board))
                     {
-                        // Проверяем, не находится ли король под атакой после хода на эту позицию
-                        Vector2Int endPosition = new Vector2Int(newX, newY);
-                        if (MovePiece(currentPosition, endPosition, board))
-                        {
-                            possibleMoves.Add(endPosition);
-                        }
+                        possibleMoves.Add(endPosition);
                     }
                 }
             }
-        }
-
-        // Добавляем возможные ходы для рокировки
-        if (CanCastle(currentPosition, new Vector2(6, startY), board))
-        {
-            possibleMoves.Add(new Vector2Int(6, startY)); // Короткая рокировка
-        }
-        if (CanCastle(currentPosition, new Vector2(2, startY), board))
-        {
-            possibleMoves.Add(new Vector2Int(2, startY)); // Длинная рокировка
         }
 
         return possibleMoves;

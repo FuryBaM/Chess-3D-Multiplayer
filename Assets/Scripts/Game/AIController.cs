@@ -1,11 +1,8 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Threading.Tasks;
+using System.Threading;
 using Stockfish.NET;
-using Stockfish.NET.Core;
-
-using System.Collections;
-using UnityEngine;
 
 public class AIController : MonoBehaviour
 {
@@ -16,27 +13,33 @@ public class AIController : MonoBehaviour
     private void Start()
     {
         _stockfish = new Stockfish.NET.Core.Stockfish(@"C:\Users\АхметовАкжол\Chess 3D Akzhol\Assets\stockfish-windows-x86-64.exe");
+        _stockfish.SkillLevel = 1;
         _board.OnMakeMove.AddListener(OnMakeMove);
     }
 
     private void OnMakeMove()
     {
         if ((Side)_board.Player != _player) return;
-        StartCoroutine(MakeAIMove());
+        StartCoroutine(MakeMoveAsync());
     }
 
-    private IEnumerator MakeAIMove()
+    private IEnumerator MakeMoveAsync()
     {
-        yield return null;
+        yield return new WaitForEndOfFrame();
+        Task<string> calculateMoveTask = Task.Run(() => CalculateBestMove());
 
-        _stockfish.SetFenPosition(_board.GetFEN());
-        _stockfish.Depth = 12;
-        string moveString = _stockfish.GetBestMove();
+        while (!calculateMoveTask.IsCompleted)
+        {
+            yield return null;
+        }
+        string moveString = calculateMoveTask.Result;
         Move gameMove = _board.ConvertStringToMove(moveString);
-
-        yield return new WaitForFixedUpdate();
-
         _board.MakeMove(gameMove.MovedPiece, gameMove.StartPosition, gameMove.EndPosition);
     }
-}
 
+    private string CalculateBestMove()
+    {
+        _stockfish.SetFenPosition(_board.GetFEN());
+        return _stockfish.GetBestMove();
+    }
+}
