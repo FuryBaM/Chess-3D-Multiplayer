@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
 using System.Threading.Tasks;
-using System.Threading;
 using Stockfish.NET;
 
 public class AIController : MonoBehaviour
