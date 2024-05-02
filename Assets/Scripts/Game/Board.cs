@@ -423,6 +423,7 @@ public sealed class Board : MonoBehaviour
 
     private bool CanPieceCoverKing(Vector2Int kingPosition, Side side)
     {
+        Piece[,] originalBoard = GameBoard;
         for (int i = 0; i < _board.GetLength(0); i++)
         {
             for (int j = 0; j < _board.GetLength(1); j++)
@@ -431,13 +432,22 @@ public sealed class Board : MonoBehaviour
                 if (piece != null && piece.Side == side)
                 {
                     List<Vector2Int> possibleMoves = piece.GetPossibleMoves(new Vector2Int(j, i), this);
-                    if (possibleMoves.Contains(kingPosition))
+                    Vector2Int lastPosition = new Vector2Int(j, i);
+                    foreach(Vector2Int move in possibleMoves)
                     {
-                        return true; 
+                        _board[move.y, move.x] = piece;
+                        _board[lastPosition.y, lastPosition.x] = null;
+                        if (!IsKingInCheck(side))
+                        {
+                            _board = originalBoard;
+                            return true;
+                        }
+                        lastPosition = move;
                     }
                 }
             }
         }
+        _board = originalBoard;
         return false;
     }
 
