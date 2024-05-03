@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 /Library
 /Logs
 /obj
@@ -8,3 +9,8 @@
 *.meta
 *.config
 *.vsconfig
+=======
+/Temp
+/Library
+/obj
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac

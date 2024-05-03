@@ -10,7 +10,12 @@ public sealed class King : Piece
         int startY = Mathf.RoundToInt(myPiecePosition.y);
         int endX = Mathf.RoundToInt(opponentPiecePosition.x);
         int endY = Mathf.RoundToInt(opponentPiecePosition.y);
+<<<<<<< HEAD
         return Mathf.Abs(endX - startX) <= 1 && Mathf.Abs(endY - startY) <= 1 && board.GetPieceAtPosition(opponentPiecePosition).Side != Side;
+=======
+        bool friendlyFire = !board.IsEmptyCell(opponentPiecePosition) && board.GetPieceAtPosition(opponentPiecePosition).Side == Side;
+        return Mathf.Abs(endX - startX) <= 1 && Mathf.Abs(endY - startY) <= 1 && !friendlyFire;
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     }
 
     public bool CanCastle(Vector2 startPositon, Vector2 endPosition, Board board)
@@ -28,14 +33,22 @@ public sealed class King : Piece
         Piece rook = board.GameBoard[rank, rookStartFile];
         if (king == null || rook == null || board.MovedPieces.Contains(king) || board.MovedPieces.Contains(rook))
         {
+<<<<<<< HEAD
             Debug.Log("Cannot castle: king or rook has moved.");
+=======
+            //Cannot castle: king or rook has moved.
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
             return false;
         }
         for (int file = Mathf.Min(kingStartFile, rookStartFile) + 1; file < Mathf.Max(kingStartFile, rookStartFile); file++)
         {
             if (board.GameBoard[rank, file] != null)
             {
+<<<<<<< HEAD
                 Debug.Log("Cannot castle: there are pieces between the king and rook.");
+=======
+                //Cannot castle: there are pieces between the king and rook.
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
                 return false;
             }
         }
@@ -44,7 +57,11 @@ public sealed class King : Piece
 
         if (board.IsAttackedCell(king, kingStartPosition) || board.IsAttackedCell(king, kingEndPosition))
         {
+<<<<<<< HEAD
             Debug.Log("Cannot castle: king would move through or into an attacked square.");
+=======
+            //Cannot castle: king would move through or into an attacked square.
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
             return false;
         }
         return true;

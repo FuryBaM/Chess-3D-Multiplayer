@@ -9,8 +9,13 @@ public sealed class Rook : Piece
         int startY = Mathf.RoundToInt(startPosition.y);
         int endX = Mathf.RoundToInt(endPosition.x);
         int endY = Mathf.RoundToInt(endPosition.y);
+<<<<<<< HEAD
         bool friendlyFire = board.GameBoard[endY, endX] != null && board.GameBoard[endY, endX].Side == Side;
         return (startX == endX || startY == endY) && !(startX == endX && startY == endY) && board.GetPieceAtPosition(endPosition).Side != Side && !friendlyFire;
+=======
+        bool friendlyFire = !board.IsEmptyCell(endPosition) && board.GetPieceAtPosition(endPosition).Side == Side;
+        return (startX == endX || startY == endY) && !(startX == endX && startY == endY) && !friendlyFire;
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     }
 
     public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)
@@ -39,12 +44,20 @@ public sealed class Rook : Piece
                 {
                     if (board.GameBoard[y, x].Side == Side)
                     {
+<<<<<<< HEAD
                         Debug.Log("There is a piece blocking the rook's path by own piece");
+=======
+                        //There is a piece blocking the rook's path by own piece
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
                         return false;
                     }
                     else if (board.GameBoard[y, x].Side == 1 - Side)
                     {
+<<<<<<< HEAD
                         Debug.Log("There is a piece blocking the rook's path by enemy piece");
+=======
+                        //There is a piece blocking the rook's path by enemy piece
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
                         return false;
                     }
                 }
@@ -53,18 +66,30 @@ public sealed class Rook : Piece
             }
             if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
             {
+<<<<<<< HEAD
                 Debug.Log("Valid move for the rook.");
+=======
+                //Valid move for the rook.
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
                 return true;
             }
             else
             {
+<<<<<<< HEAD
                 Debug.Log("Target position is occupied by own piece.");
+=======
+                //Target position is occupied by own piece.
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
                 return false;
             }
         }
         else
         {
+<<<<<<< HEAD
             Debug.Log("Invalid move for the rook.");
+=======
+            //Invalid move for the rook.
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
             return false;
         }
     }

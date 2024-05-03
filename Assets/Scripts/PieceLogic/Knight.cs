@@ -11,7 +11,12 @@ public sealed class Knight : Piece
         int endY = Mathf.RoundToInt(endPosition.y);
         int dx = Mathf.Abs(endX - startX);
         int dy = Mathf.Abs(endY - startY);
+<<<<<<< HEAD
         return ((dx == 2 && dy == 1) || (dx == 1 && dy == 2)) && board.GetPieceAtPosition(endPosition).Side != Side;
+=======
+        bool friendlyFire = !board.IsEmptyCell(endPosition) && board.GetPieceAtPosition(endPosition).Side == Side;
+        return ((dx == 2 && dy == 1) || (dx == 1 && dy == 2)) && !friendlyFire;
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     }
 
     public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)

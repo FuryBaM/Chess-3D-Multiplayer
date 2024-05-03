@@ -11,14 +11,22 @@ public class AIController : MonoBehaviour
 
     private void Start()
     {
+<<<<<<< HEAD
         _stockfish = new Stockfish.NET.Core.Stockfish(@"C:\Users\АхметовАкжол\Chess 3D Akzhol\Assets\stockfish-windows-x86-64.exe");
+=======
+        _stockfish = new Stockfish.NET.Core.Stockfish($"{Application.dataPath}/stockfish-windows-x86-64.exe");
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
         _stockfish.SkillLevel = 1;
         _board.OnMakeMove.AddListener(OnMakeMove);
     }
 
     private void OnMakeMove()
     {
+<<<<<<< HEAD
         if ((Side)_board.Player != _player) return;
+=======
+        if ((Side)_board.Player != _player || _board.IsGameOver) return;
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
         StartCoroutine(MakeMoveAsync());
     }
 

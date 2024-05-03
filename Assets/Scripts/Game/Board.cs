@@ -33,7 +33,11 @@ public sealed class Board : MonoBehaviour
     }
     private List<Move> _movesHistory = new List<Move>();
     private bool _isGameOver = false;
+<<<<<<< HEAD
     private bool IsGameOver
+=======
+    public bool IsGameOver
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     {
         get
         {
@@ -44,6 +48,10 @@ public sealed class Board : MonoBehaviour
     public UnityEvent OnCheck;
     public UnityEvent OnMate;
     public UnityEvent OnStalemate;
+<<<<<<< HEAD
+=======
+    public UnityEvent<Piece> OnCapture;
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     public UnityEvent OnMakeMove;
     [Header("Piece Movement")]
     [SerializeField] private float _moveDuration = 1f;
@@ -285,7 +293,10 @@ public sealed class Board : MonoBehaviour
         return -1;
     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     public IEnumerator MovePieceSmoothly(Piece piece, Vector2Int startPosition, Vector2Int endPosition, float moveDuration, AnimationCurve curve)
     {
         Vector3 start = new Vector3(startPosition.x, 0, startPosition.y);
@@ -301,7 +312,11 @@ public sealed class Board : MonoBehaviour
         }
         piece.transform.position = end;
     }
+<<<<<<< HEAD
 
+=======
+    #region MakeMove
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     public bool MakeMove(Piece piece, Vector2Int startPosition, Vector2Int endPosition)
     {
         if (_isGameOver == true) return false;
@@ -337,6 +352,10 @@ public sealed class Board : MonoBehaviour
                 Vector2Int enPassantCapturePosition = lastMove.EndPosition;
                 StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
                 _movedPieces.Add(piece);
+<<<<<<< HEAD
+=======
+                OnCapture?.Invoke(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
                 Destroy(_board[enPassantCapturePosition.y, enPassantCapturePosition.x].gameObject);
                 _board[enPassantCapturePosition.y, enPassantCapturePosition.x] = null;
                 _board[endPosition.y, endPosition.x] = piece;
@@ -356,13 +375,21 @@ public sealed class Board : MonoBehaviour
             if (!IsKingInCheck((Side)_currentPlayer))
             {
                 _board = cloneBoard;
+<<<<<<< HEAD
                Destroy(_board[endPosition.y, endPosition.x].gameObject);
+=======
+                OnCapture?.Invoke(_board[endPosition.y, endPosition.x]);
+                Destroy(_board[endPosition.y, endPosition.x].gameObject);
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
             }
             else
             {
                 _board = cloneBoard;
             }
+<<<<<<< HEAD
             Debug.Log("Captured a piece");
+=======
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
         }
 
         if (!canMove) return false;
@@ -380,19 +407,48 @@ public sealed class Board : MonoBehaviour
         _currentPlayer = 1 - _currentPlayer;
         _currentMove++;
         _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
+<<<<<<< HEAD
+=======
+        if (piece.GetType() == typeof(Pawn) && (endPosition.y == 0 || endPosition.y == 7))
+        {
+            char pieceChar = 'Q';
+            piece = PromotePawn(endPosition, 1 - _currentPlayer == 0 ? char.ToUpper(pieceChar) : char.ToLower(pieceChar));
+            OnMakeMove?.Invoke();
+            return true;
+        }
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
         OnMakeMove?.Invoke();
         return true;
     }
+<<<<<<< HEAD
 
+=======
+    #endregion
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     private void OnMove()
     {
         bool isCheck = IsKingInCheck((Side)_currentPlayer);
         Piece king = FindKing((Side)_currentPlayer);
+<<<<<<< HEAD
         if (isCheck && king.GetPossibleMoves(GetPiecePosition(king), this).Count == 0)
         {
             _isGameOver = true;
             OnMate?.Invoke();
+=======
+        Vector2Int kingPosition = GetPiecePosition(king);
+        if (isCheck && king.GetPossibleMoves(GetPiecePosition(king), this).Count == 0)
+        {
+            if (!CanPieceCoverKing(kingPosition, king.Side))
+            {
+                _isGameOver = true;
+                OnMate?.Invoke();
+            }
+            else
+            {
+                OnCheck?.Invoke();
+            }
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
         }
         else if (isCheck)
         {
@@ -405,6 +461,39 @@ public sealed class Board : MonoBehaviour
         }
     }
 
+<<<<<<< HEAD
+=======
+    private bool CanPieceCoverKing(Vector2Int kingPosition, Side side)
+    {
+        Piece[,] originalBoard = GameBoard;
+        for (int i = 0; i < _board.GetLength(0); i++)
+        {
+            for (int j = 0; j < _board.GetLength(1); j++)
+            {
+                Piece piece = _board[i, j];
+                if (piece != null && piece.Side == side)
+                {
+                    List<Vector2Int> possibleMoves = piece.GetPossibleMoves(new Vector2Int(j, i), this);
+                    Vector2Int lastPosition = new Vector2Int(j, i);
+                    foreach(Vector2Int move in possibleMoves)
+                    {
+                        _board[move.y, move.x] = piece;
+                        _board[lastPosition.y, lastPosition.x] = null;
+                        if (!IsKingInCheck(side))
+                        {
+                            _board = originalBoard;
+                            return true;
+                        }
+                        lastPosition = move;
+                    }
+                }
+            }
+        }
+        _board = originalBoard;
+        return false;
+    }
+
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     private bool AllPiecesHaveNoMoves(Side currentPlayer)
     {
         for (int i = 0; i < _board.GetLength(0); i++)
@@ -424,8 +513,35 @@ public sealed class Board : MonoBehaviour
         }
         return true;
     }
+<<<<<<< HEAD
 
 
+=======
+    #region Pawn Promotion
+    public Piece PromotePawn(Vector2Int position, char newPieceChar = 'q')
+    {
+        Piece pawn = GetPieceAtPosition(position);
+        if (pawn == null || !(pawn is Pawn))
+        {
+            Debug.LogError("No pawn found at the specified position.");
+            return null;
+        }
+
+        Piece newPiece = SpawnPieceByChar(newPieceChar);
+        if (newPiece == null)
+        {
+            Debug.LogError("Invalid piece character.");
+            return null;
+        }
+
+        _board[position.y, position.x] = newPiece;
+        Destroy(pawn.gameObject);
+        newPiece.transform.position = new Vector3(position.x, 0, position.y);
+        return newPiece;
+    }
+    #endregion
+    #region Castle
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     public bool Castle(bool isShortCastle)
     {
         int rank = _currentPlayer == 0 ? 0 : 7;
@@ -438,14 +554,22 @@ public sealed class Board : MonoBehaviour
         Piece rook = _board[rank, rookStartFile];
         if (king == null || rook == null || _movedPieces.Contains(king) || _movedPieces.Contains(rook))
         {
+<<<<<<< HEAD
             Debug.Log("Cannot castle: king or rook has moved.");
+=======
+            //Cannot castle: king or rook has moved.
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
             return false;
         }
         for (int file = Mathf.Min(kingStartFile, rookStartFile) + 1; file < Mathf.Max(kingStartFile, rookStartFile); file++)
         {
             if (_board[rank, file] != null)
             {
+<<<<<<< HEAD
                 Debug.Log("Cannot castle: there are pieces between the king and rook.");
+=======
+                //Cannot castle: there are pieces between the king and rook.
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
                 return false;
             }
         }
@@ -454,7 +578,11 @@ public sealed class Board : MonoBehaviour
 
         if (IsAttackedCell(king, kingStartPosition) || IsAttackedCell(king, kingEndPosition))
         {
+<<<<<<< HEAD
             Debug.Log("Cannot castle: king would move through or into an attacked square.");
+=======
+            //Cannot castle: king would move through or into an attacked square
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
             return false;
         }
         StartCoroutine(MovePieceSmoothly(king, kingStartPosition, kingEndPosition, _moveDuration, _pieceMovementCurve));
@@ -471,8 +599,14 @@ public sealed class Board : MonoBehaviour
         _movesHistory.Add(new Move(king, true, new Vector2Int(kingStartFile, rank), new Vector2Int(kingEndFile, rank)));
         return true;
     }
+<<<<<<< HEAD
     public bool IsEmptyCell(Vector2Int position) => !Board.IsPositionInBounds(position) || _board[position.y, position.x] == null;
 
+=======
+    #endregion
+    public bool IsEmptyCell(Vector2Int position) => !Board.IsPositionInBounds(position) || _board[position.y, position.x] == null;
+    #region  Check Attacked Cell
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     public bool IsAttackedCell(Vector2Int position)
     {
         if (!IsPositionInBounds(position)) return false;
@@ -504,7 +638,13 @@ public sealed class Board : MonoBehaviour
     {
         if (!IsPositionInBounds(position)) return false;
         Piece originalPiece = GetPieceAtPosition(position);
+<<<<<<< HEAD
         _board[position.y, position.x] = attackedPiece;
+=======
+        Vector2Int attackedPiecePosition = GetPiecePosition(attackedPiece);
+        _board[position.y, position.x] = attackedPiece;
+        _board[attackedPiecePosition.y, attackedPiecePosition.x] = null;
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
         for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)
@@ -522,14 +662,26 @@ public sealed class Board : MonoBehaviour
                     if (canMove && canCapture) // It is attacked cell
                     {
                         _board[position.y, position.x] = originalPiece;
+<<<<<<< HEAD
+=======
+                        _board[attackedPiecePosition.y, attackedPiecePosition.x] = attackedPiece;
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
                         return true;
                     }
                 }
             }
         }
+<<<<<<< HEAD
         _board[position.y, position.x] = originalPiece;
         return false;
     }
+=======
+        _board[attackedPiecePosition.y, attackedPiecePosition.x] = attackedPiece;
+        _board[position.y, position.x] = originalPiece;
+        return false;
+    }
+    #endregion
+>>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
     private bool IsKingInCheck(Side side)
     {
         Piece king = FindKing(side);
