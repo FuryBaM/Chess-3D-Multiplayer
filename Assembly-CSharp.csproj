@@ -62,26 +62,26 @@
     <Analyzer Include="C:\Users\АхметовАкжол\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.0.1\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Stockfish.NET\Exceptions\MaxTriesException.cs" />
     <Compile Include="Assets\Scripts\PieceLogic\Piece.cs" />
     <Compile Include="Assets\Scripts\PieceLogic\Rook.cs" />
+    <Compile Include="Assets\Stockfish.NET\Models\Evaluation.cs" />
     <Compile Include="Assets\Scripts\PieceLogic\Queen.cs" />
     <Compile Include="Assets\Scripts\Game\Board.cs" />
+    <Compile Include="Assets\Stockfish.NET\Core\IStockfish.cs" />
+    <Compile Include="Assets\Stockfish.NET\Models\Settings.cs" />
     <Compile Include="Assets\Scripts\PieceLogic\Pawn.cs" />
     <Compile Include="Assets\Scripts\PieceLogic\Knight.cs" />
     <Compile Include="Assets\Scripts\PieceLogic\King.cs" />
     <Compile Include="Assets\Scripts\Game\GameManager.cs" />
     <Compile Include="Assets\Scripts\MenuNavigation.cs" />
     <Compile Include="Assets\Scripts\Game\Move.cs" />
+    <Compile Include="Assets\Scripts\Game\AIController.cs" />
     <Compile Include="Assets\Scripts\Game\PlayerController.cs" />
-    <Compile Include="Assets\Scripts\PieceLogic\Bishop.cs" />
-    <Compile Include="Assets\Stockfish.NET\Exceptions\MaxTriesException.cs" />
-    <Compile Include="Assets\Stockfish.NET\Models\Evaluation.cs" />
-    <Compile Include="Assets\Stockfish.NET\Core\IStockfish.cs" />
-    <Compile Include="Assets\Stockfish.NET\Models\Settings.cs" />
     <Compile Include="Assets\Stockfish.NET\Core\StockfishProcess.cs" />
+    <Compile Include="Assets\Scripts\PieceLogic\Bishop.cs" />
     <Compile Include="Assets\Stockfish.NET\Models\Color.cs" />
     <Compile Include="Assets\Stockfish.NET\Core\Stockfish.cs" />
-    <Compile Include="Assets\Scripts\Game\AIController.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
