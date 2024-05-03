@@ -16,15 +16,6 @@ public sealed class Pawn : Piece
         if (Mathf.Abs(endX - startX) == 1 && Mathf.Abs(endY - startY) == 1)
         {
             if (board.GameBoard[endY, endX] == null) return false;
-<<<<<<< HEAD
-            if (Side == Side.white)
-            {
-                return endY > startY && board.GetPieceAtPosition(opponentPiecePosition).Side != Side;
-            }
-            else
-            {
-                return endY < startY && board.GetPieceAtPosition(opponentPiecePosition).Side != Side;
-=======
             bool friendlyFire = !board.IsEmptyCell(opponentPiecePosition) && board.GetPieceAtPosition(opponentPiecePosition).Side == Side;
             if (Side == Side.white)
             {
@@ -33,7 +24,6 @@ public sealed class Pawn : Piece
             else
             {
                 return endY < startY && !friendlyFire;
->>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
             }
         }
         return false;
@@ -77,11 +67,7 @@ public sealed class Pawn : Piece
     }
     public bool IsEnPassant(Vector2Int startPosition, Vector2Int endPosition, Move lastMove)
     {
-<<<<<<< HEAD
-        if (lastMove == null) return false; 
-=======
         if (lastMove == null || lastMove.MovedPiece.Side == Side) return false; 
->>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
         Piece movedPiece = lastMove.MovedPiece;
         Vector2Int movedPieceEndPosition = lastMove.EndPosition;
 

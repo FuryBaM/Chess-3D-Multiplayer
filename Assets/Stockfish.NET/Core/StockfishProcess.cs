@@ -30,12 +30,8 @@ namespace Stockfish.NET
                 UseShellExecute = false,
                 RedirectStandardError = true,
                 RedirectStandardInput = true,
-<<<<<<< HEAD
-                RedirectStandardOutput = true
-=======
                 RedirectStandardOutput = true,
                 CreateNoWindow = true
->>>>>>> 52f65a09fc87522973687a1a5596052063acc6ac
             };
             _process = new Process {StartInfo = _processStartInfo};
         }
