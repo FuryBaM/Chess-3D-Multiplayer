@@ -330,7 +330,7 @@ public sealed class Board : MonoBehaviour
         bool isCheck = IsKingInCheck((Side)_currentPlayer);
 
         bool canMove = false;
-        if (piece.GetType() == typeof(King) && Mathf.Abs(endPosition.x - startPosition.x) > 1 && endPosition.y == startPosition.y && !isCheck)
+        if (piece is King && Mathf.Abs(endPosition.x - startPosition.x) > 1 && endPosition.y == startPosition.y && !isCheck)
         {
             canMove = Castle(endPosition.x > startPosition.x);
             if (canMove)
@@ -345,7 +345,7 @@ public sealed class Board : MonoBehaviour
             canMove = piece.MovePiece(startPosition, endPosition, this);
         }
 
-        if (piece.GetType() == typeof(Pawn))
+        if (piece is Pawn)
         {
             Move lastMove = _movesHistory.Count > 0 ? _movesHistory[_movesHistory.Count - 1] : null;
             if (_movesHistory.Count > 0 && piece.GetComponent<Pawn>().IsEnPassant(startPosition, endPosition, lastMove))
@@ -397,7 +397,7 @@ public sealed class Board : MonoBehaviour
         _currentPlayer = 1 - _currentPlayer;
         CurrentMove++;
         
-        if (piece.GetType() == typeof(Pawn) && (endPosition.y == 0 || endPosition.y == 7))
+        if (piece is Pawn && (endPosition.y == 0 || endPosition.y == 7))
         {
             char pieceChar = 'Q';
             piece = PromotePawn(endPosition, 1 - _currentPlayer == 0 ? char.ToUpper(pieceChar) : char.ToLower(pieceChar));
