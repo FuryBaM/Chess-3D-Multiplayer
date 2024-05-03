@@ -42,6 +42,18 @@ public sealed class Board : MonoBehaviour
             return _movesHistory;
         }
     }
+    private Dictionary<Side, List<Piece>> _capturedPieces = new Dictionary<Side, List<Piece>>
+    {
+        {Side.white, new List<Piece>()},
+        {Side.black, new List<Piece>()}
+    };
+    public IDictionary<Side, List<Piece>> CapturedPieces
+    {
+        get
+        {
+            return _capturedPieces;
+        }
+    }
     public bool IsGameOver
     {
         get;
@@ -354,7 +366,8 @@ public sealed class Board : MonoBehaviour
                 StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
                 _movedPieces.Add(piece);
                 OnCapture?.Invoke(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
-                Destroy(_board[enPassantCapturePosition.y, enPassantCapturePosition.x].gameObject);
+                _board[enPassantCapturePosition.y, enPassantCapturePosition.x].gameObject.SetActive(false);
+                _capturedPieces[(Side)_currentPlayer].Add(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
                 _board[enPassantCapturePosition.y, enPassantCapturePosition.x] = null;
                 _board[endPosition.y, endPosition.x] = piece;
                 _currentPlayer = 1 - _currentPlayer;
@@ -374,7 +387,8 @@ public sealed class Board : MonoBehaviour
             {
                 _board = cloneBoard;
                 OnCapture?.Invoke(_board[endPosition.y, endPosition.x]);
-                Destroy(_board[endPosition.y, endPosition.x].gameObject);
+                _board[endPosition.y, endPosition.x].gameObject.SetActive(false);
+                _capturedPieces[(Side)_currentPlayer].Add(_board[endPosition.y, endPosition.x]);
             }
             else
             {
