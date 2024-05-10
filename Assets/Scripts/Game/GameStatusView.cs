@@ -175,6 +175,7 @@ public class GameStatusView : MonoBehaviour
                 Image capturedPieceImage = capturedPieceObject.AddComponent<Image>();
                 capturedPieceImage.sprite = sprite;
                 capturedPieceImage.rectTransform.localScale = Vector3.one;
+                capturedPieceImage.rectTransform.sizeDelta = new Vector2(50, 50);
                 capturedPieces.Add(capturedPieceImage);
             }
         }

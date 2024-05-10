@@ -278,7 +278,7 @@ public sealed class Board : MonoBehaviour
 
     public Move ConvertStringToMove(string moveString)
     {
-        if (moveString.Length != 4 && moveString.Length != 5)
+        if (moveString == null || moveString.Length != 4 && moveString.Length != 5)
         {
             Debug.LogError("Invalid move string format. Must be in the format 'startEnd', e.g., 'd8g5'. " + moveString);
             return null;
@@ -365,7 +365,6 @@ public sealed class Board : MonoBehaviour
                 Vector2Int enPassantCapturePosition = lastMove.EndPosition;
                 StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
                 _movedPieces.Add(piece);
-                OnCapture?.Invoke(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
                 _board[enPassantCapturePosition.y, enPassantCapturePosition.x].gameObject.SetActive(false);
                 _capturedPieces[(Side)_currentPlayer].Add(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
                 _board[enPassantCapturePosition.y, enPassantCapturePosition.x] = null;
@@ -373,7 +372,7 @@ public sealed class Board : MonoBehaviour
                 _currentPlayer = 1 - _currentPlayer;
                 CurrentMove++;
                 _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
-                OnMakeMove?.Invoke();
+                OnCapture?.Invoke(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
                 return true;
             }
         }
@@ -386,9 +385,9 @@ public sealed class Board : MonoBehaviour
             if (!IsKingInCheck((Side)_currentPlayer))
             {
                 _board = cloneBoard;
-                OnCapture?.Invoke(_board[endPosition.y, endPosition.x]);
                 _board[endPosition.y, endPosition.x].gameObject.SetActive(false);
                 _capturedPieces[(Side)_currentPlayer].Add(_board[endPosition.y, endPosition.x]);
+                OnCapture?.Invoke(_board[endPosition.y, endPosition.x]);
             }
             else
             {
