@@ -35,7 +35,7 @@ public class AIController : MonoBehaviour
         }
         string moveString = calculateMoveTask.Result;
         Move gameMove = _board.ConvertStringToMove(moveString);
-        _board.MakeMove(gameMove.MovedPiece, gameMove.StartPosition, gameMove.EndPosition);
+        _board.MakeMove(gameMove.StartPosition, gameMove.EndPosition);
     }
 
     private string CalculateBestMove()

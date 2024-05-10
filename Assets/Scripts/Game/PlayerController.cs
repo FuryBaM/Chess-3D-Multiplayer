@@ -1,16 +1,35 @@
 ﻿using System;
 using UnityEngine;
+using Mirror;
 
-public sealed class PlayerController : MonoBehaviour
+public sealed class PlayerController : NetworkBehaviour
 {
     [Header("Board Features")]
     [SerializeField] private Board _board;
     [SerializeField] private Material _outline;
     private Piece _selectedPiece = null;
+    [SyncVar]
     [SerializeField] private Side _player = Side.white;
     [SerializeField] private LayerMask _whatIsSelectable;
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        if (NetworkServer.connections.Count > 1)
+        {
+            _player = Side.black;
+        }
+        else
+        {
+            _player = Side.white;
+        }
+    }
+    private void Awake()
+    {
+        _board = FindObjectOfType<Board>();
+    }
     private void Update()
     {
+        if (!isLocalPlayer || (Side)_board.Player != _player) return;
         if (_selectedPiece == null)
         {
             SelectPiece();
@@ -90,6 +109,7 @@ public sealed class PlayerController : MonoBehaviour
     }
     private void MovePieceToMouse()
     {
+        if (!isLocalPlayer) return;
         if (_selectedPiece == null || _board.IsGameOver) return;
         Vector2Int movePosition;
         Vector2Int startPosition = new Vector2Int(Mathf.RoundToInt(_selectedPiece.transform.position.x), Mathf.RoundToInt(_selectedPiece.transform.position.z));
@@ -102,7 +122,7 @@ public sealed class PlayerController : MonoBehaviour
                 if (hit.collider.gameObject.CompareTag("Board"))
                 {
                     movePosition = new Vector2Int(Mathf.RoundToInt(hit.point.x), Mathf.RoundToInt(hit.point.z));
-                    _board.MakeMove(_selectedPiece, startPosition, movePosition);
+                    CmdMovePiece(startPosition, movePosition);
                     UnselectPiece();
                 }
                 else if (hit.collider.gameObject.CompareTag("Piece"))
@@ -110,10 +130,15 @@ public sealed class PlayerController : MonoBehaviour
                     Piece piece = hit.collider.GetComponent<Piece>();
                     if (piece.Side == _player) return;
                     movePosition = _board.GetPiecePosition(piece);
-                    _board.MakeMove(_selectedPiece, startPosition, movePosition);
+                    CmdMovePiece(startPosition, movePosition);
                     UnselectPiece();
                 }
             }
         }
+    }
+    [Command]
+    public void CmdMovePiece(Vector2Int startPosition, Vector2Int endPosition)
+    {
+        _board.MakeMove(startPosition, endPosition);
     }
 }

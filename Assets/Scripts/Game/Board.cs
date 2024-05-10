@@ -2,9 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Mirror;
 using UnityEngine;
 using UnityEngine.Events;
-public sealed class Board : MonoBehaviour
+public sealed class Board : NetworkBehaviour
 {
     private Piece[,] _board = new Piece[8, 8];
     public Piece[,] GameBoard 
@@ -14,6 +15,7 @@ public sealed class Board : MonoBehaviour
             return _board.Clone() as Piece[,]; 
         } 
     }
+    [SyncVar]
     private int _currentPlayer = 0;
     public int Player
     {
@@ -22,10 +24,15 @@ public sealed class Board : MonoBehaviour
             return _currentPlayer;
         }
     }
+    [SyncVar]
+    private int _currentMove = 1;
     public int CurrentMove
     {
-        get; private set;
-    } = 1;
+        get
+        {
+            return _currentMove;
+        }
+    }
     private HashSet<Piece> _movedPieces = new HashSet<Piece>();
     public IList<Piece> MovedPieces
     {
@@ -74,25 +81,28 @@ public sealed class Board : MonoBehaviour
     [SerializeField] private GameObject _hightlightCapturablePrefab;
     private List<GameObject> _highlights = new List<GameObject>();
     [Header("Piece Prefabs")]
-    [SerializeField] Piece whiteKing;
-    [SerializeField] Piece whitePawn;
-    [SerializeField] Piece whiteKnight;
-    [SerializeField] Piece whiteBishop;
-    [SerializeField] Piece whiteRook;
-    [SerializeField] Piece whiteQueen;
-    [SerializeField] Piece blackKing;
-    [SerializeField] Piece blackPawn;
-    [SerializeField] Piece blackKnight;
-    [SerializeField] Piece blackBishop;
-    [SerializeField] Piece blackRook;
-    [SerializeField] Piece blackQueen;
+    [SerializeField] GameObject whiteKing;
+    [SerializeField] GameObject whitePawn;
+    [SerializeField] GameObject whiteKnight;
+    [SerializeField] GameObject whiteBishop;
+    [SerializeField] GameObject whiteRook;
+    [SerializeField] GameObject whiteQueen;
+    [SerializeField] GameObject blackKing;
+    [SerializeField] GameObject blackPawn;
+    [SerializeField] GameObject blackKnight;
+    [SerializeField] GameObject blackBishop;
+    [SerializeField] GameObject blackRook;
+    [SerializeField] GameObject blackQueen;
 
     [Header("FEN Editor")]
     [SerializeField] private string fen;
-
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+    }
     private void Start()
     {
-        ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
         OnMakeMove.AddListener(OnMove);
         OnCastle.AddListener(OnMove);
         OnPromotion.AddListener(OnMove);
@@ -159,10 +169,9 @@ public sealed class Board : MonoBehaviour
         if (!IsPositionInBounds(position)) return null;
         return _board[position.y, position.x];
     }
-
     public void ImportFEN(string fenString)
     {
-        if (!Application.isPlaying) return;
+        if (!Application.isPlaying || !isServer) return;
         ClearBoard();
         string[] parts = fenString.Split(' ');
         string[] rows = parts[0].Split('/');
@@ -188,52 +197,54 @@ public sealed class Board : MonoBehaviour
             }
         }
     }
-    
     private Piece SpawnPieceByChar(char fenChar)
     {
-        Piece piece = null;
+        GameObject prefab = null;
         switch (fenChar)
         {
             case 'K':
-                piece = Instantiate(whiteKing);
+                prefab = whiteKing;
                 break;
             case 'P':
-                piece = Instantiate(whitePawn);
+                prefab = whitePawn;
                 break;
             case 'N':
-                piece = Instantiate(whiteKnight);
+                prefab = whiteKnight;
                 break;
             case 'B':
-                piece = Instantiate(whiteBishop);
+                prefab = whiteBishop;
                 break;
             case 'R':
-                piece = Instantiate(whiteRook);
+                prefab = whiteRook;
                 break;
             case 'Q':
-                piece = Instantiate(whiteQueen);
+                prefab = whiteQueen;
                 break;
             case 'k':
-                piece = Instantiate(blackKing);
+                prefab = blackKing;
                 break;
             case 'p':
-                piece = Instantiate(blackPawn);
+                prefab = blackPawn;
                 break;
             case 'n':
-                piece = Instantiate(blackKnight);
+                prefab = blackKnight;
                 break;
             case 'b':
-                piece = Instantiate(blackBishop);
+                prefab = blackBishop;
                 break;
             case 'r':
-                piece = Instantiate(blackRook);
+                prefab = blackRook;
                 break;
             case 'q':
-                piece = Instantiate(blackQueen);
+                prefab = blackQueen;
                 break;
             default:
-                return piece;
+                return null;
         }
-        return piece;
+
+        GameObject pieceObject = Instantiate(prefab);
+        NetworkServer.Spawn(pieceObject);
+        return pieceObject.GetComponent<Piece>();
     }
 
     private const string FEN_PIECE_MAPPING = "KQRBNPkqrbnp";
@@ -278,9 +289,14 @@ public sealed class Board : MonoBehaviour
 
     public Move ConvertStringToMove(string moveString)
     {
-        if (moveString == null || moveString.Length != 4 && moveString.Length != 5)
+        if (moveString.Length != 4 && moveString.Length != 5)
         {
             Debug.LogError("Invalid move string format. Must be in the format 'startEnd', e.g., 'd8g5'. " + moveString);
+            return null;
+        }
+        else if (moveString == null)
+        {
+            Debug.LogError("Null string" + moveString);
             return null;
         }
 
@@ -328,10 +344,31 @@ public sealed class Board : MonoBehaviour
         }
         piece.transform.position = end;
     }
+    [Command]
+    private void CmdDeactivatePiece(Vector2Int position)
+    {
+        Piece pieceToDeactivate = GetPieceAtPosition(position);
+        if (pieceToDeactivate != null)
+        {
+            pieceToDeactivate.gameObject.SetActive(false);
+            RpcDeactivatePiece(position);
+        }
+    }
+
+    [ClientRpc]
+    private void RpcDeactivatePiece(Vector2Int position)
+    {
+        Piece pieceToDeactivate = GetPieceAtPosition(position);
+        if (pieceToDeactivate != null)
+        {
+            pieceToDeactivate.gameObject.SetActive(false);
+        }
+    }
 
     #region MakeMove
-    public bool MakeMove(Piece piece, Vector2Int startPosition, Vector2Int endPosition)
+    public bool MakeMove(Vector2Int startPosition, Vector2Int endPosition)
     {
+        Piece piece = GetPieceAtPosition(startPosition);
         if (IsGameOver == true) return false;
         if (((int)piece.Side) != _currentPlayer)
         { 
@@ -365,12 +402,13 @@ public sealed class Board : MonoBehaviour
                 Vector2Int enPassantCapturePosition = lastMove.EndPosition;
                 StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
                 _movedPieces.Add(piece);
-                _board[enPassantCapturePosition.y, enPassantCapturePosition.x].gameObject.SetActive(false);
+                CmdDeactivatePiece(enPassantCapturePosition);
+                // _board[enPassantCapturePosition.y, enPassantCapturePosition.x].gameObject.SetActive(false);
                 _capturedPieces[(Side)_currentPlayer].Add(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
                 _board[enPassantCapturePosition.y, enPassantCapturePosition.x] = null;
                 _board[endPosition.y, endPosition.x] = piece;
                 _currentPlayer = 1 - _currentPlayer;
-                CurrentMove++;
+                _currentMove++;
                 _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
                 OnCapture?.Invoke(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
                 return true;
@@ -385,7 +423,8 @@ public sealed class Board : MonoBehaviour
             if (!IsKingInCheck((Side)_currentPlayer))
             {
                 _board = cloneBoard;
-                _board[endPosition.y, endPosition.x].gameObject.SetActive(false);
+                CmdDeactivatePiece(endPosition);
+                // _board[endPosition.y, endPosition.x].gameObject.SetActive(false);
                 _capturedPieces[(Side)_currentPlayer].Add(_board[endPosition.y, endPosition.x]);
                 OnCapture?.Invoke(_board[endPosition.y, endPosition.x]);
             }
@@ -408,7 +447,7 @@ public sealed class Board : MonoBehaviour
 
         _movedPieces.Add(piece);
         _currentPlayer = 1 - _currentPlayer;
-        CurrentMove++;
+        _currentMove++;
         
         if (piece is Pawn && (endPosition.y == 0 || endPosition.y == 7))
         {
@@ -572,7 +611,7 @@ public sealed class Board : MonoBehaviour
         _board[rank, kingEndFile] = king;
         _board[rank, rookEndFile] = rook;
         _currentPlayer = 1 - _currentPlayer;
-        CurrentMove++;
+        _currentMove++;
         _movesHistory.Add(new Move(king, true, new Vector2Int(kingStartFile, rank), new Vector2Int(kingEndFile, rank)));
         return true;
     }
@@ -673,20 +712,5 @@ public sealed class Board : MonoBehaviour
         OnMate.RemoveAllListeners();
         OnStalemate.RemoveAllListeners();
     }
-
-    // [CustomEditor(typeof(Board))]
-    // public class customButton : Editor
-    // {
-    //     public override void OnInspectorGUI()
-    //     {
-    //         DrawDefaultInspector();
-
-    //         Board myScript = (Board)target;
-    //         if (GUILayout.Button("Import FEN"))
-    //         {
-    //             myScript.ImportFEN(myScript.fen);
-    //         }
-    //     }
-    // }
 }
 

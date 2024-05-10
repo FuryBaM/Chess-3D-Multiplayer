@@ -10,6 +10,10 @@ public class MenuNavigation : MonoBehaviour
     {
         SceneManager.LoadScene("GameScene");
     }
+    public void LoadMultiplayerGame()
+    {
+        SceneManager.LoadScene("MultiplayerGameScene");
+    }
     public void LoadLobby()
     {
         SceneManager.LoadScene("LobbyScene");
