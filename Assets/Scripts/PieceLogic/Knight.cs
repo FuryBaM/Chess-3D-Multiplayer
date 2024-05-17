@@ -33,7 +33,7 @@ public sealed class Knight : Piece
         int dy = Mathf.Abs(endY - startY);
         if ((dx == 2 && dy == 1) || (dx == 1 && dy == 2))
         {
-            if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
+            if (board.GameBoard[endY*8+endX] == null || board.GameBoard[endY*8+endX].Side != this.Side)
             {
                 return true;
             }

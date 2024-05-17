@@ -15,7 +15,7 @@ public sealed class Pawn : Piece
         }
         if (Mathf.Abs(endX - startX) == 1 && Mathf.Abs(endY - startY) == 1)
         {
-            if (board.GameBoard[endY, endX] == null) return false;
+            if (board.GameBoard[endY*8+endX] == null) return false;
             bool friendlyFire = !board.IsEmptyCell(opponentPiecePosition) && board.GetPieceAtPosition(opponentPiecePosition).Side == Side;
             if (Side == Side.white)
             {
@@ -47,12 +47,12 @@ public sealed class Pawn : Piece
         {
             if (endY - startY == 1 && Side == Side.white || endY - startY == -1 && Side == Side.black)
             { 
-                return true && board.GameBoard[endY, endX] == null;
+                return true && board.GameBoard[endY*8+endX] == null;
             }
             else
             {
                 if (endY - startY == 2 && Side == Side.white && startY == 1 || endY - startY == -2 && Side == Side.black && startY == 6)
-                    return true && board.GameBoard[endY, endX] == null;
+                    return true && board.GameBoard[endY*8+endX] == null;
                 return false;
             }
         }

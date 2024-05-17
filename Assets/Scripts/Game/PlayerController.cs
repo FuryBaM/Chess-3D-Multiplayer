@@ -11,18 +11,6 @@ public sealed class PlayerController : NetworkBehaviour
     [SyncVar]
     [SerializeField] private Side _player = Side.white;
     [SerializeField] private LayerMask _whatIsSelectable;
-    public override void OnStartServer()
-    {
-        base.OnStartServer();
-        if (NetworkServer.connections.Count > 1)
-        {
-            _player = Side.black;
-        }
-        else
-        {
-            _player = Side.white;
-        }
-    }
     private void Awake()
     {
         _board = FindObjectOfType<Board>();
@@ -136,9 +124,15 @@ public sealed class PlayerController : NetworkBehaviour
             }
         }
     }
+    public void SetPlayerSide(Side side)
+    {
+        _player = side;
+    }
     [Command]
     public void CmdMovePiece(Vector2Int startPosition, Vector2Int endPosition)
     {
+        Debug.Log("Called move");
         _board.MakeMove(startPosition, endPosition);
+        
     }
 }

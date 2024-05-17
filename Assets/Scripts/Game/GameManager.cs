@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
     [SerializeField] private Board _board;
 
@@ -28,6 +29,36 @@ public class GameManager : MonoBehaviour
         _board.OnMate.AddListener(OnMate);
         _board.OnStalemate.AddListener(OnStalemate);
         _board.OnCapture.AddListener(OnCapture);
+    }
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            _board.LogBoardState();
+            Debug.Log(_board.GetPieceAtPosition(new Vector2Int(0,0)).GetComponent<NetworkIdentity>().netId);
+            Debug.Log(_board.GetPieceAtPosition(new Vector2Int(1,0)).GetComponent<NetworkIdentity>().netId);
+        }
+    }
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        print("Client Connected");
+        if (isServer)
+        {
+            _board.ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        }
+        if (NetworkServer.connections.Count >= 2)
+        {
+            print("Enough Players");
+            CmdGiveColor();
+        }
+    }
+    [Command]
+    private void CmdGiveColor()
+    {
+        PlayerController[] players = FindObjectsOfType<PlayerController>();
+        players[0].SetPlayerSide(Side.white);
+        players[1].SetPlayerSide(Side.black);
     }
 
     private void OnDisable()

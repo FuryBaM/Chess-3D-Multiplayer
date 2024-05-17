@@ -25,8 +25,8 @@ public sealed class King : Piece
         int rookStartFile = isShortCastle ? 7 : 0;
         int kingEndFile = isShortCastle ? 6 : 2;
 
-        Piece king = board.GameBoard[rank, kingStartFile];
-        Piece rook = board.GameBoard[rank, rookStartFile];
+        Piece king = board.GameBoard[rank*8+kingStartFile];
+        Piece rook = board.GameBoard[rank*8+rookStartFile];
         if (king == null || rook == null || board.MovedPieces.Contains(king) || board.MovedPieces.Contains(rook))
         {
             //Cannot castle: king or rook has moved.
@@ -34,7 +34,7 @@ public sealed class King : Piece
         }
         for (int file = Mathf.Min(kingStartFile, rookStartFile) + 1; file < Mathf.Max(kingStartFile, rookStartFile); file++)
         {
-            if (board.GameBoard[rank, file] != null)
+            if (board.GameBoard[rank*8+file] != null)
             {
                 //Cannot castle: there are pieces between the king and rook.
                 return false;
@@ -67,7 +67,7 @@ public sealed class King : Piece
 
         if (Mathf.Abs(endX - startX) <= 1 && Mathf.Abs(endY - startY) <= 1)
         {
-            if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
+            if (board.GameBoard[endY*8+endX] == null || board.GameBoard[endY*8+endX].Side != this.Side)
             {
                 return true;
             }

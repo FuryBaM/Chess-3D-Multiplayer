@@ -9,7 +9,7 @@ public sealed class Queen : Piece
         int startY = Mathf.RoundToInt(startPosition.y);
         int endX = Mathf.RoundToInt(endPosition.x);
         int endY = Mathf.RoundToInt(endPosition.y);
-        bool friendlyFire = board.GameBoard[endPosition.y, endPosition.x] && board.GameBoard[endY, endX].Side == Side;
+        bool friendlyFire = board.GameBoard[endPosition.y*8+endPosition.x] && board.GameBoard[endY*8+endX].Side == Side;
         if (startX == endX || startY == endY || Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY) && !friendlyFire)
         {
             return true;
@@ -41,13 +41,13 @@ public sealed class Queen : Piece
             int y = startY + deltaY;
             while (x != endX || y != endY)
             {
-                if (board.GameBoard[y, x] != null)
+                if (board.GameBoard[y*8+x] != null)
                 {
-                    if (board.GameBoard[y, x].Side == Side)
+                    if (board.GameBoard[y*8+x].Side == Side)
                     {
                         return false;
                     }
-                    else if (board.GameBoard[y, x].Side != Side)
+                    else if (board.GameBoard[y*8+x].Side != Side)
                     {
                         return false;
                     }
@@ -55,7 +55,7 @@ public sealed class Queen : Piece
                 x += deltaX;
                 y += deltaY;
             }
-            if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
+            if (board.GameBoard[endY*8+endX] == null || board.GameBoard[endY*8+endX].Side != this.Side)
             {
                 return true;
             }
@@ -76,8 +76,8 @@ public sealed class Queen : Piece
         // Определяем начальные координаты
         int startX = Mathf.RoundToInt(currentPosition.x);
         int startY = Mathf.RoundToInt(currentPosition.y);
-        int width = board.GameBoard.GetLength(1);
-        int height = board.GameBoard.GetLength(0);
+        int width = 8;
+        int height = 8;
 
         // Добавляем возможные ходы для ладьи (по вертикали и горизонтали)
         for (int x = startX - 1; x >= 0; x--)

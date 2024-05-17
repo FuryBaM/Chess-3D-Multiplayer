@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 
 public enum Side
@@ -6,8 +8,10 @@ public enum Side
     white = 0,
     black = 1
 }
-public abstract class Piece : MonoBehaviour
+[Serializable]
+public abstract class Piece : NetworkBehaviour
 {
+    [SyncVar]
     [SerializeField] private Side _pieceSide = Side.white;
     public Side Side { get => _pieceSide; protected set { _pieceSide = value; } }
     public abstract bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board);

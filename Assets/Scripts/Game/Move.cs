@@ -1,7 +1,8 @@
 ﻿using System.Threading;
 using UnityEngine;
 using System;
-public sealed class Move
+[Serializable]
+public class Move
 {
     public Piece MovedPiece { get; }
     public bool Castle { get; }
