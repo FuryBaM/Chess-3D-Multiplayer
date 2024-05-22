@@ -36,14 +36,14 @@ public sealed class Bishop : Piece
             int y = startY + deltaY;
             while (x != endX && y != endY)
             {
-                if (board.GameBoard[y * 8 + x] != null)
+                if (board.GameBoard[y, x] != null)
                 {
-                    if (board.GameBoard[y * 8 + x].Side == Side)
+                    if (board.GameBoard[y, x].Side == Side)
                     {
                         //There is a piece blocking the bishop's path by own piece
                         return false;
                     }
-                    else if (board.GameBoard[y * 8 + x].Side == 1 - Side && x != endX && y != endY)
+                    else if (board.GameBoard[y, x].Side == 1 - Side && x != endX && y != endY)
                     {
                         //There is a piece blocking the bishop's path by enemy piece
                         return false;
@@ -52,7 +52,7 @@ public sealed class Bishop : Piece
                 x += deltaX;
                 y += deltaY;
             }
-            if (board.GameBoard[endY*8+endX] == null || board.GameBoard[endY*8+endX].Side != this.Side)
+            if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
             {
                 //Valid move for the bishop.
                 return true;

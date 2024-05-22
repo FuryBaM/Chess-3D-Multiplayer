@@ -4,7 +4,7 @@ using Mirror;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameStatusView : MonoBehaviour
+public class GameStatusView : NetworkBehaviour
 {
     [SerializeField] private Board _board;
     [SerializeField] private MoveUIElement _moveElementPrefab;
@@ -56,7 +56,6 @@ public class GameStatusView : MonoBehaviour
         _board.OnStalemate.RemoveListener(OnMate);
         _board.OnPromotion.RemoveListener(OnMove);
     }
-
     private void OnMove()
     {
         MoveUIElement _currentMoveElement;
@@ -80,7 +79,6 @@ public class GameStatusView : MonoBehaviour
             _currentMoveElement.SetBlackMove(MoveConverter.ConvertMoveToString(_board.GetLastMove()));
         }
     }
-
     private void OnCapture(Piece piece)
     {
         // Увеличиваем счет за захваты
@@ -131,28 +129,23 @@ public class GameStatusView : MonoBehaviour
             return 0; // Для случая, если тип фигуры не совпадает с ожидаемыми
         }
     }
-
     private void OnCheck()
     {
         // Дополнительные действия при шахе
     }
-
     private void OnMate()
     {
         // Дополнительные действия при мате
     }
-
     private void OnCastle()
     {
         OnMove();
     }
-
     private void UpdateCaptures()
     {
         UpdateCapturedPieces(_whiteCapturesImage, _whiteCapturedPieces, _board.CapturedPieces[Side.white]);
         UpdateCapturedPieces(_blackCapturesImage, _blackCapturedPieces, _board.CapturedPieces[Side.black]);
     }
-
     private void UpdateCapturedPieces(Image capturesImage, List<Image> capturedPieces, List<Piece> pieces)
     {
         // Удаляем все текущие отображаемые фигуры

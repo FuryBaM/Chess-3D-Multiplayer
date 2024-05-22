@@ -7,15 +7,16 @@ using UnityEngine;
 using UnityEngine.Events;
 public sealed class Board : NetworkBehaviour
 {
-    private SyncList<Piece> _board = new SyncList<Piece>();
-    public SyncList<Piece> GameBoard 
+    public SyncList<int> boardState = new SyncList<int>();
+
+    private Piece[,] _board = new Piece[8, 8];
+    public Piece[,] GameBoard 
     {
         get 
         {
-            return new SyncList<Piece>(_board);
+            return _board.Clone() as Piece[,]; 
         } 
     }
-
     [SyncVar]
     private int _currentPlayer = 0;
     public int Player
@@ -97,60 +98,94 @@ public sealed class Board : NetworkBehaviour
 
     [Header("FEN Editor")]
     [SerializeField] private string fen;
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        boardState.Callback += SyncIntVars;
+    }
     private void Start()
     {
+        InitBoard();
         OnMakeMove.AddListener(OnMove);
         OnCastle.AddListener(OnMove);
         OnPromotion.AddListener(OnMove);
-        if (isServer)
-        {
-            InitializeBoard();
-        }
     }
-    private void InitializeBoard()
+    private void InitBoard()
     {
+        if (!isServer) return;
         for (int i = 0; i < 64; i++)
         {
-            _board.Add(null);
+            boardState.Add(-1);
         }
     }
-    public void Set(int x, int y, Piece piece)
+    private void Update()
     {
-        int index = y * 8 + x;
-        if (index >= 0 && index < _board.Count)
+        if (Input.GetKeyDown(KeyCode.Q))
         {
-            _board[index] = piece;
-        }
-        else
-        {
-            Debug.LogError("Index out of range.");
+            LogBoardState();
+            print(NetworkServer.connections.Count);
         }
     }
-
-    public Piece Get(int x, int y)
+    private void SyncIntVars(SyncList<int>.Operation op, int index, int oldItem, int newItem)
     {
-        int index = y * 8 + x;
-        if (index >= 0 && index < _board.Count)
+        switch (op)
         {
-            return _board[index];
-        }
-        else
-        {
-            Debug.LogError("Index out of range.");
-            return null;
+            case SyncList<int>.Operation.OP_SET:
+            {
+                int netId = newItem;
+                int x = index % 8;
+                int y = index / 8;
+
+                if (netId == -1)
+                {
+                    _board[y, x] = null;
+                }
+                else
+                {
+                    var piece = NetworkClient.spawned[(uint)netId].GetComponent<Piece>();
+                    _board[y, x] = piece;
+                }
+                break;
+            }
+            default:
+            {
+                break;
+            }
         }
     }
-
-    public static bool IsPositionInBounds(Vector2 position) => !(position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8);
-    public void ClearBoard()
+    [Command(requiresAuthority = false)]
+    public void CmdSyncBoard()
+    {
+        SyncBoard();
+    }
+    [Server]
+    public void SyncBoard()
     {
         for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)
             {
-                if (Get(j, i) != null)
+                if (_board[i, j] == null)
                 {
-                    Destroy(Get(j, i).gameObject);
+                    boardState[i * 8 + j] = -1;
+                }
+                else
+                {
+                    boardState[i * 8 + j] = (int)_board[i, j].GetComponent<NetworkIdentity>().netId;
+                }
+            }
+        }
+    }
+    public static bool IsPositionInBounds(Vector2 position) => !(position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8);
+    public void ClearBoard()
+    {
+        for (int i = 0; i < _board.GetLength(0); i++)
+        {
+            for (int j = 0; j < _board.GetLength(1); j++)
+            {
+                if (_board[i, j] != null)
+                {
+                    Destroy(_board[i, j].gameObject);
                 }
             }
         }
@@ -163,9 +198,9 @@ public sealed class Board : NetworkBehaviour
         {
             for (int x = 0; x < 8; x++)
             {
-                if (Get(x, y)!= null)
+                if (_board[y, x] != null)
                 {
-                    boardState[y, x] = Get(x, y).name;
+                    boardState[y, x] = _board[y, x].name;
                 }
                 else
                 {
@@ -183,7 +218,7 @@ public sealed class Board : NetworkBehaviour
             }
             logMessage += "\n";
         }
-        print(_board.Count);
+
         Debug.Log(logMessage);
     }
 
@@ -217,11 +252,11 @@ public sealed class Board : NetworkBehaviour
     {
         Vector2Int position = new Vector2Int(-1, -1);
         if (!piece) return position;
-        for(int i = 0; i < 8; i++)
+        for(int i = 0; i < _board.GetLength(0); i++)
         {
-            for (int j = 0; j < 8; j++)
+            for (int j = 0; j < _board.GetLength(0); j++)
             {
-                if (GameObject.ReferenceEquals(Get(j, i), piece))
+                if (GameObject.ReferenceEquals(_board[i, j], piece))
                 {
                     position = new Vector2Int(j, i);
                 }
@@ -233,9 +268,8 @@ public sealed class Board : NetworkBehaviour
     public Piece GetPieceAtPosition(Vector2Int position)
     {
         if (!IsPositionInBounds(position)) return null;
-        return Get(position.x, position.y);
+        return _board[position.y, position.x];
     }
-    [ClientRpc]
     public void ImportFEN(string fenString)
     {
         if (!Application.isPlaying || !isServer) return;
@@ -258,11 +292,12 @@ public sealed class Board : NetworkBehaviour
                     Piece piece = SpawnPieceByChar(c);
                     Vector3 position = new Vector3(x, 0, y);
                     piece.transform.position = position;
-                    Set(x, y, piece);
+                    _board[y, x] = piece;
                     x++;
                 }
             }
         }
+        SyncBoard();
     }
     private Piece SpawnPieceByChar(char fenChar)
     {
@@ -324,7 +359,7 @@ public sealed class Board : NetworkBehaviour
             int emptySquaresCount = 0;
             for (int file = 0; file < 8; file++)
             {
-                Piece piece = Get(file, rank);
+                Piece piece = _board[rank, file];
 
                 if (piece == null)
                 {
@@ -413,9 +448,9 @@ public sealed class Board : NetworkBehaviour
     }
 
     #region MakeMove
-    [ClientRpc]
     public void MakeMove(Vector2Int startPosition, Vector2Int endPosition)
     {
+        SyncBoard();
         Piece piece = GetPieceAtPosition(startPosition);
         if (IsGameOver == true) return;
         if (((int)piece.Side) != _currentPlayer)
@@ -433,6 +468,7 @@ public sealed class Board : NetworkBehaviour
             if (canMove)
             {
                 OnCastle?.Invoke();
+                SyncBoard();
                 return;
             }
         }
@@ -450,29 +486,31 @@ public sealed class Board : NetworkBehaviour
                 Vector2Int enPassantCapturePosition = lastMove.EndPosition;
                 StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
                 _movedPieces.Add(piece);
-                Get(enPassantCapturePosition.x, enPassantCapturePosition.y).gameObject.SetActive(false);
-                _capturedPieces[(Side)_currentPlayer].Add(Get(enPassantCapturePosition.x, enPassantCapturePosition.y));
-                Set(enPassantCapturePosition.x, enPassantCapturePosition.y, null);
-                Set(endPosition.x, endPosition.y, piece);
+                _board[enPassantCapturePosition.y, enPassantCapturePosition.x].gameObject.SetActive(false);
+                _capturedPieces[(Side)_currentPlayer].Add(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
+                _board[enPassantCapturePosition.y, enPassantCapturePosition.x] = null;
+                _board[endPosition.y, endPosition.x] = piece;
                 _currentPlayer = 1 - _currentPlayer;
                 _currentMove++;
                 _movesHistory.Add(new Move(piece, false, startPosition, endPosition));
-                OnCapture?.Invoke(Get(enPassantCapturePosition.x, enPassantCapturePosition.y));
+                OnCapture?.Invoke(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
+                SyncBoard();
                 return;
             }
         }
 
-        if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, this) && Get(endPosition.x, endPosition.y).Side != (Side)_currentPlayer)
+        if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, this) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
         {
-            SyncList<Piece> cloneBoard = _board;
-            Set(endPosition.x, endPosition.y, piece);
-            Set(startPosition.x, startPosition.y, null);
+            Piece[,] cloneBoard = GameBoard;
+            _board[endPosition.y, endPosition.x] = piece;
+            _board[startPosition.y, startPosition.x] = null;
             if (!IsKingInCheck((Side)_currentPlayer))
             {
                 _board = cloneBoard;
-                Get(endPosition.x, endPosition.y).gameObject.SetActive(false);
-                _capturedPieces[(Side)_currentPlayer].Add(Get(endPosition.x, endPosition.y));
-                OnCapture?.Invoke(Get(endPosition.x, endPosition.y));
+                _board[endPosition.y, endPosition.x].gameObject.SetActive(false);
+                _capturedPieces[(Side)_currentPlayer].Add(_board[endPosition.y, endPosition.x]);
+                OnCapture?.Invoke(_board[endPosition.y, endPosition.x]);
+                SyncBoard();
             }
             else
             {
@@ -481,9 +519,9 @@ public sealed class Board : NetworkBehaviour
         }
 
         if (!canMove) return;
-        SyncList<Piece> clone = GameBoard;
-        Set(endPosition.x, endPosition.y, piece);
-        Set(startPosition.x, startPosition.y, null);
+        Piece[,] clone = GameBoard;
+        _board[endPosition.y, endPosition.x] = piece;
+        _board[startPosition.y, startPosition.x] = null;
         
         if (IsKingInCheck((Side)_currentPlayer))
         {
@@ -501,6 +539,7 @@ public sealed class Board : NetworkBehaviour
             piece = PromotePawn(endPosition, 1 - _currentPlayer == 0 ? char.ToUpper(pieceChar) : char.ToLower(pieceChar));
             _movesHistory.Add(new Move(piece, false, startPosition, endPosition, true));
             OnPromotion?.Invoke();
+            SyncBoard();
             return;
         }
         else
@@ -509,6 +548,7 @@ public sealed class Board : NetworkBehaviour
         }
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
         OnMakeMove?.Invoke();
+        SyncBoard();
     }
 
     #endregion
@@ -542,21 +582,21 @@ public sealed class Board : NetworkBehaviour
 
     private bool CanPieceCoverKing(Vector2Int kingPosition, Side side)
     {
-        SyncList<Piece> originalBoard = GameBoard;
-        for (int i = 0; i < 8; i++)
+        Piece[,] originalBoard = GameBoard;
+        for (int i = 0; i < _board.GetLength(0); i++)
         {
-            for (int j = 0; j < 8; j++)
+            for (int j = 0; j < _board.GetLength(1); j++)
             {
-                Piece piece = Get(j, i);
+                Piece piece = _board[i, j];
                 if (piece != null && piece.Side == side)
                 {
                     List<Vector2Int> possibleMoves = piece.GetPossibleMoves(new Vector2Int(j, i), this);
                     foreach (Vector2Int move in possibleMoves)
                     {
                         if (!IsPositionInBounds(move)) continue;
-                        SyncList<Piece> cloneBoard = GameBoard;
-                        Set(move.x, move.y, piece);
-                        Set(j, i, null);
+                        Piece[,] cloneBoard = GameBoard;
+                        _board[move.y, move.x] = piece;
+                        _board[i, j] = null;
                         if (!IsKingInCheck(side))
                         {
                             _board = originalBoard;
@@ -574,11 +614,11 @@ public sealed class Board : NetworkBehaviour
 
     private bool AllPiecesHaveNoMoves(Side currentPlayer)
     {
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < _board.GetLength(0); i++)
         {
-            for (int j = 0; j < 8; j++)
+            for (int j = 0; j < _board.GetLength(1); j++)
             {
-                Piece piece = Get(j, i);
+                Piece piece = _board[i, j];
                 if (piece != null && piece.Side == currentPlayer)
                 {
                     List<Vector2Int> possibleMoves = piece.GetPossibleMoves(new Vector2Int(j, i), this);
@@ -607,7 +647,8 @@ public sealed class Board : NetworkBehaviour
             Debug.LogError("Invalid piece character.");
             return null;
         }
-        Set(position.x, position.y, newPiece);
+
+        _board[position.y, position.x] = newPiece;
         Destroy(pawn.gameObject);
         newPiece.transform.position = new Vector3(position.x, 0, position.y);
         return newPiece;
@@ -622,8 +663,8 @@ public sealed class Board : NetworkBehaviour
         int kingEndFile = isShortCastle ? 6 : 2;
         int rookEndFile = isShortCastle ? 5 : 3;
 
-        Piece king = Get(kingStartFile, rank);
-        Piece rook = Get(rookStartFile, rank);
+        Piece king = _board[rank, kingStartFile];
+        Piece rook = _board[rank, rookStartFile];
         if (king == null || rook == null || _movedPieces.Contains(king) || _movedPieces.Contains(rook))
         {
             //Cannot castle: king or rook has moved.
@@ -631,7 +672,7 @@ public sealed class Board : NetworkBehaviour
         }
         for (int file = Mathf.Min(kingStartFile, rookStartFile) + 1; file < Mathf.Max(kingStartFile, rookStartFile); file++)
         {
-            if (Get(file, rank) != null)
+            if (_board[rank, file] != null)
             {
                 //Cannot castle: there are pieces between the king and rook.
                 return false;
@@ -650,17 +691,17 @@ public sealed class Board : NetworkBehaviour
 
         _movedPieces.Add(king);
         _movedPieces.Add(rook);
-        Set(kingStartFile, rank, null);
-        Set(rookStartFile, rank, null);
-        Set(kingEndFile, rank, king);
-        Set(rookEndFile, rank, rook);
+        _board[rank, kingStartFile] = null;
+        _board[rank, rookStartFile] = null;
+        _board[rank, kingEndFile] = king;
+        _board[rank, rookEndFile] = rook;
         _currentPlayer = 1 - _currentPlayer;
         _currentMove++;
         _movesHistory.Add(new Move(king, true, new Vector2Int(kingStartFile, rank), new Vector2Int(kingEndFile, rank)));
         return true;
     }
     #endregion
-    public bool IsEmptyCell(Vector2Int position) => !Board.IsPositionInBounds(position) || Get(position.x, position.y) == null;
+    public bool IsEmptyCell(Vector2Int position) => !Board.IsPositionInBounds(position) || _board[position.y, position.x] == null;
     #region  Check Attacked Cell
     public bool IsAttackedCell(Vector2Int position)
     {
@@ -694,8 +735,8 @@ public sealed class Board : NetworkBehaviour
         if (!IsPositionInBounds(position)) return false;
         Piece originalPiece = GetPieceAtPosition(position);
         Vector2Int attackedPiecePosition = GetPiecePosition(attackedPiece);
-        Set(position.x, position.y, attackedPiece);
-        Set(attackedPiecePosition.x, attackedPiecePosition.y, null);
+        _board[position.y, position.x] = attackedPiece;
+        _board[attackedPiecePosition.y, attackedPiecePosition.x] = null;
         for (int i = 0; i < 8; i++)
         {
             for (int j = 0; j < 8; j++)
@@ -712,15 +753,15 @@ public sealed class Board : NetworkBehaviour
                     bool canCapture = piece.CanCapture(startPosition, position, this);
                     if (canMove && canCapture) // It is attacked cell
                     {
-                        Set(position.x, position.y, originalPiece);
-                        Set(attackedPiecePosition.x, attackedPiecePosition.y, attackedPiece);
+                        _board[position.y, position.x] = originalPiece;
+                        _board[attackedPiecePosition.y, attackedPiecePosition.x] = attackedPiece;
                         return true;
                     }
                 }
             }
         }
-        Set(attackedPiecePosition.x, attackedPiecePosition.y, attackedPiece);
-        Set(position.x, position.y, originalPiece);
+        _board[attackedPiecePosition.y, attackedPiecePosition.x] = attackedPiece;
+        _board[position.y, position.x] = originalPiece;
         return false;
     }
     #endregion
@@ -738,7 +779,7 @@ public sealed class Board : NetworkBehaviour
         {
             for (int j = 0; j < 8; j++)
             {
-                Piece piece = Get(j, i);
+                Piece piece = _board[i, j];
                 if (piece == null) continue;
                 else if (piece != null && piece.Side == side && piece.GetType() == typeof(King))
                 {

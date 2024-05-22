@@ -85,6 +85,7 @@
     <Compile Include="Assets\Scripts\PieceLogic\Bishop.cs" />
     <Compile Include="Assets\Stockfish.NET\Models\Color.cs" />
     <Compile Include="Assets\Stockfish.NET\Core\Stockfish.cs" />
+    <Compile Include="Assets\Scripts\DebugConsoleBuild.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />

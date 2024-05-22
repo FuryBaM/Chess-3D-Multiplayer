@@ -1,14 +1,15 @@
 ﻿using System.Threading;
 using UnityEngine;
 using System;
+using Mirror;
 [Serializable]
 public class Move
 {
-    public Piece MovedPiece { get; }
-    public bool Castle { get; }
-    public Vector2Int StartPosition { get; }
-    public Vector2Int EndPosition { get; }
-    public bool Promotion { get; }
+    public Piece MovedPiece { get; private set;}
+    public bool Castle { get; private set;}
+    public Vector2Int StartPosition { get; private set;}
+    public Vector2Int EndPosition { get; private set;}
+    public bool Promotion { get; private set;}
 
     public Move(Piece movedPiece, bool castle, Vector2Int startPosition, Vector2Int endPosition, bool promotion = false)
     {

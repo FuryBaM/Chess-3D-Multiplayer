@@ -133,6 +133,5 @@ public sealed class PlayerController : NetworkBehaviour
     {
         Debug.Log("Called move");
         _board.MakeMove(startPosition, endPosition);
-        
     }
 }

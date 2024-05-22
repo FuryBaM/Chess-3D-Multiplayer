@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Mirror;
+﻿using Mirror;
 using UnityEngine;
 
 public class GameManager : NetworkBehaviour
 {
     [SerializeField] private Board _board;
+    private bool _playersReady = false;
 
     private void OnCheck()
     {
@@ -25,6 +24,7 @@ public class GameManager : NetworkBehaviour
     }
     private void OnEnable() 
     {
+        NetworkServer.OnConnectedEvent += OnConnected;
         _board.OnCheck.AddListener(OnCheck);
         _board.OnMate.AddListener(OnMate);
         _board.OnStalemate.AddListener(OnStalemate);
@@ -32,37 +32,41 @@ public class GameManager : NetworkBehaviour
     }
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (NetworkServer.connections.Count >= 2 && _playersReady == false)
         {
-            _board.LogBoardState();
-            Debug.Log(_board.GetPieceAtPosition(new Vector2Int(0,0)).GetComponent<NetworkIdentity>().netId);
-            Debug.Log(_board.GetPieceAtPosition(new Vector2Int(1,0)).GetComponent<NetworkIdentity>().netId);
+            foreach(var conn in NetworkServer.connections)
+            {
+                if (!conn.Value.isReady)
+                {
+                    return;
+                }
+            }
+            GiveColor();
         }
     }
-    public override void OnStartClient()
+
+    private void OnConnected(NetworkConnectionToClient client)
     {
-        base.OnStartClient();
         print("Client Connected");
-        if (isServer)
-        {
-            _board.ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
-        }
+        print($"{client.address} {client.connectionId} {client.isReady}");
         if (NetworkServer.connections.Count >= 2)
         {
             print("Enough Players");
-            CmdGiveColor();
+            _board.ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
         }
     }
-    [Command]
-    private void CmdGiveColor()
+    public void GiveColor()
     {
+        if (NetworkServer.connections.Count < 2) return;
         PlayerController[] players = FindObjectsOfType<PlayerController>();
         players[0].SetPlayerSide(Side.white);
         players[1].SetPlayerSide(Side.black);
+        _playersReady = true;
     }
 
     private void OnDisable()
     {
+        NetworkServer.OnConnectedEvent-=OnConnected;
         _board.OnMate.RemoveListener(OnMate);
         _board.OnCheck.RemoveListener(OnCheck);
         _board.OnStalemate.RemoveListener(OnStalemate);

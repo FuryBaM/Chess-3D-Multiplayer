@@ -1,8 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 
-public class BoardSound : MonoBehaviour
+public class BoardSound : NetworkBehaviour
 {
     [SerializeField] private Board _board;
     [SerializeField] private AudioClip _moveSound;
