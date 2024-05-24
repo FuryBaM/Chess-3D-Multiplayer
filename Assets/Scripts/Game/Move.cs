@@ -3,14 +3,29 @@ using UnityEngine;
 using System;
 using Mirror;
 [Serializable]
+public struct MoveData
+{
+    public uint MovedPieceId;
+    public bool Castle;
+    public Vector2Int StartPosition;
+    public Vector2Int EndPosition;
+    public bool Promotion;
+    public MoveData(uint movedPieceId, bool castle, Vector2Int startPosition, Vector2Int endPosition, bool promotion = false)
+    {
+        MovedPieceId = movedPieceId;
+        Castle = castle;
+        StartPosition = startPosition;
+        EndPosition = endPosition;
+        Promotion = promotion;
+    }
+}
 public class Move
 {
-    public Piece MovedPiece { get; private set;}
-    public bool Castle { get; private set;}
-    public Vector2Int StartPosition { get; private set;}
-    public Vector2Int EndPosition { get; private set;}
-    public bool Promotion { get; private set;}
-
+    public Piece MovedPiece;
+    public bool Castle;
+    public Vector2Int StartPosition;
+    public Vector2Int EndPosition;
+    public bool Promotion;
     public Move(Piece movedPiece, bool castle, Vector2Int startPosition, Vector2Int endPosition, bool promotion = false)
     {
         MovedPiece = movedPiece;
@@ -27,9 +42,10 @@ public class Move
 
 public static class MoveConverter
 {
-    public static string ConvertMoveToString(Move move)
+    public static string ConvertMoveToString(Move move, Piece piece)
     {
         string moveString = "";
+        Debug.Log(move);
         
         // Если ход является рокировкой, вернем "O-O" или "O-O-O" в зависимости от типа рокировки
         if (move.Castle)
@@ -45,7 +61,7 @@ public static class MoveConverter
         }
         
         // В противном случае вернем ход в алгебраической нотации
-        string pieceSymbol = GetPieceSymbol(move.MovedPiece);
+        string pieceSymbol = GetPieceSymbol(piece);
         string endPosition = GetPositionString(move.EndPosition);
 
         moveString += pieceSymbol;

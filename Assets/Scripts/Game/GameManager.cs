@@ -1,4 +1,5 @@
-﻿using Mirror;
+﻿using System;
+using Mirror;
 using UnityEngine;
 
 public class GameManager : NetworkBehaviour
@@ -18,9 +19,9 @@ public class GameManager : NetworkBehaviour
     {
         print($"Draw!");
     }
-    private void OnCapture(Piece capturedPiece)
+    private void OnCapture(uint capturedPieceId)
     {
-        print($"{capturedPiece} is captured.");
+        print($"{NetworkServer.spawned[capturedPieceId]} is captured.");
     }
     private void OnEnable() 
     {
@@ -30,6 +31,7 @@ public class GameManager : NetworkBehaviour
         _board.OnStalemate.AddListener(OnStalemate);
         _board.OnCapture.AddListener(OnCapture);
     }
+
     private void Update()
     {
         if (NetworkServer.connections.Count >= 2 && _playersReady == false)
@@ -42,6 +44,7 @@ public class GameManager : NetworkBehaviour
                 }
             }
             GiveColor();
+            _board.SyncBoard();
         }
     }
 

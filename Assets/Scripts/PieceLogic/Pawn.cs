@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 
 public sealed class Pawn : Piece
@@ -67,8 +69,9 @@ public sealed class Pawn : Piece
     }
     public bool IsEnPassant(Vector2Int startPosition, Vector2Int endPosition, Move lastMove)
     {
-        if (lastMove == null || lastMove.MovedPiece.Side == Side) return false; 
+        if (lastMove == null) return false;
         Piece movedPiece = lastMove.MovedPiece;
+        if (movedPiece.Side == Side) return false;
         Vector2Int movedPieceEndPosition = lastMove.EndPosition;
 
         if (movedPiece.GetType() == typeof(Pawn) && Mathf.Abs(movedPieceEndPosition.y - lastMove.StartPosition.y) == 2 && startPosition.y == movedPieceEndPosition.y)
@@ -134,4 +137,8 @@ public sealed class Pawn : Piece
         return possibleMoves;
     }
 
+    internal bool IsEnPassant(Vector2Int startPosition, Vector2Int endPosition, MoveData? lastMove)
+    {
+        throw new NotImplementedException();
+    }
 }

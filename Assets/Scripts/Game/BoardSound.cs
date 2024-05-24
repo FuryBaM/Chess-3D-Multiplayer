@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Mirror;
-using UnityEngine;
+﻿using UnityEngine;
 
-public class BoardSound : NetworkBehaviour
+public class BoardSound : MonoBehaviour
 {
     [SerializeField] private Board _board;
     [SerializeField] private AudioClip _moveSound;
@@ -41,7 +38,7 @@ public class BoardSound : NetworkBehaviour
     {
         _audioSource.PlayOneShot(_moveSound);
     }
-    private void OnCapture(Piece piece)
+    private void OnCapture(uint pieceId)
     {
         _audioSource.PlayOneShot(_captureSound);
     }

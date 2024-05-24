@@ -71,6 +71,7 @@
     <Compile Include="Assets\Scripts\PieceLogic\Queen.cs" />
     <Compile Include="Assets\Scripts\Game\Board.cs" />
     <Compile Include="Assets\Scripts\Game\GameStatusView.cs" />
+    <Compile Include="Assets\Scripts\DebugConsoleBuild.cs" />
     <Compile Include="Assets\Stockfish.NET\Core\IStockfish.cs" />
     <Compile Include="Assets\Stockfish.NET\Models\Settings.cs" />
     <Compile Include="Assets\Scripts\PieceLogic\Pawn.cs" />
@@ -85,7 +86,6 @@
     <Compile Include="Assets\Scripts\PieceLogic\Bishop.cs" />
     <Compile Include="Assets\Stockfish.NET\Models\Color.cs" />
     <Compile Include="Assets\Stockfish.NET\Core\Stockfish.cs" />
-    <Compile Include="Assets\Scripts\DebugConsoleBuild.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />

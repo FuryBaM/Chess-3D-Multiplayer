@@ -4,7 +4,7 @@ using Mirror;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameStatusView : NetworkBehaviour
+public class GameStatusView : MonoBehaviour
 {
     [SerializeField] private Board _board;
     [SerializeField] private MoveUIElement _moveElementPrefab;
@@ -59,6 +59,7 @@ public class GameStatusView : NetworkBehaviour
     private void OnMove()
     {
         MoveUIElement _currentMoveElement;
+        print(_board.Player);
         if (_board.Player == 1)
         {
             _currentMoveElement = Instantiate(_moveElementPrefab, _moveContent);
@@ -66,21 +67,26 @@ public class GameStatusView : NetworkBehaviour
         }
         else
         {
+            if (_currentMoveElements.Count == 0) return;
             _currentMoveElement = _currentMoveElements.Last();
         }
 
         _currentMoveElement.SetMoveNumeration(_board.CurrentMove / 2);
+        if (_board.MovedPieces.Count == 0) return;
+        Move move = _board.GetLastMove();
+        Piece piece = move.MovedPiece;
         if (1 - _board.Player == 0)
         {
-            _currentMoveElement.SetWhiteMove(MoveConverter.ConvertMoveToString(_board.GetLastMove()));
+            _currentMoveElement.SetWhiteMove(MoveConverter.ConvertMoveToString(move, piece));
         }
         else
         {
-            _currentMoveElement.SetBlackMove(MoveConverter.ConvertMoveToString(_board.GetLastMove()));
+            _currentMoveElement.SetBlackMove(MoveConverter.ConvertMoveToString(move, piece));
         }
     }
-    private void OnCapture(Piece piece)
+    private void OnCapture(uint capturedPieceId)
     {
+        Piece piece = NetworkClient.spawned[capturedPieceId].GetComponent<Piece>();
         // Увеличиваем счет за захваты
         int captureValue = GetPieceValue(piece);
         if (piece.Side == Side.white)
