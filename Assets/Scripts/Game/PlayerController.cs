@@ -10,10 +10,13 @@ public sealed class PlayerController : NetworkBehaviour
     private Piece _selectedPiece = null;
     [SyncVar]
     [SerializeField] private Side _player = Side.white;
+    private Camera _playerCamera;
+
     [SerializeField] private LayerMask _whatIsSelectable;
     private void Awake()
     {
         _board = FindObjectOfType<Board>();
+        _playerCamera = FindObjectOfType<Camera>();
     }
     private void Update()
     {
@@ -30,6 +33,12 @@ public sealed class PlayerController : NetworkBehaviour
                 UnselectPiece();
             }
         }
+    }
+    [TargetRpc]
+    public void OnSideChanged(Side newSide)
+    {
+        print($"Side changed {newSide}");
+        _playerCamera.GetComponent<CameraPositionChanger>().SetSide(newSide);
     }
     private void SelectPiece()
     {
@@ -124,9 +133,11 @@ public sealed class PlayerController : NetworkBehaviour
             }
         }
     }
+    [Server]
     public void SetPlayerSide(Side side)
     {
         _player = side;
+        OnSideChanged(side);
     }
     [Command]
     public void CmdMovePiece(Vector2Int startPosition, Vector2Int endPosition)

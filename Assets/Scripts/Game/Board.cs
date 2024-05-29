@@ -8,7 +8,6 @@ using UnityEngine.Events;
 public sealed class Board : NetworkBehaviour
 {
     public SyncList<int> boardState = new SyncList<int>();
-
     private Piece[,] _board = new Piece[8, 8];
     public Piece[,] GameBoard 
     {
@@ -168,7 +167,14 @@ public sealed class Board : NetworkBehaviour
             case SyncList<uint>.Operation.OP_ADD:
             {
                 Piece piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
-                _capturedPieces[Side.white].Add(piece);
+                if (_capturedPieces.Count == itemIndex)
+                {
+                    _capturedPieces[Side.white][itemIndex] = piece;
+                }
+                else
+                {
+                    _capturedPieces[Side.white].Add(piece);
+                }
                 break;
             }
         }
@@ -367,6 +373,33 @@ public sealed class Board : NetworkBehaviour
                     boardState[i * 8 + j] = (int)_board[i, j].GetComponent<NetworkIdentity>().netId;
                 }
             }
+        }
+        
+    }
+    [ClientRpc]
+    public void SyncData(int currentPlayer, int currentMove, List<MoveData> moveHistoryData, List<uint> movedPieces, List<uint> whiteCaptures, List<uint> blackCaptures)
+    {
+        _currentPlayer = currentPlayer;
+        _currentMove = currentMove;
+        _movesHistory.Clear();
+        foreach(var move in moveHistoryData)
+        {
+            _movesHistory.Add(new Move(NetworkClient.spawned[move.MovedPieceId].GetComponent<Piece>(), move.Castle, move.StartPosition, move.EndPosition, move.Promotion));
+        }
+        _movedPieces.Clear();
+        foreach(var pieceId in movedPieces)
+        {
+            _movedPieces.Add(NetworkClient.spawned[pieceId].GetComponent<Piece>());
+        }
+        _capturedPieces[Side.white].Clear();
+        foreach(var pieceId in whiteCaptures)
+        {
+            _capturedPieces[Side.white].Add(NetworkClient.spawned[pieceId].GetComponent<Piece>());
+        }
+        _capturedPieces[Side.white].Clear();
+        foreach(var pieceId in blackCaptures)
+        {
+            _capturedPieces[Side.black].Add(NetworkClient.spawned[pieceId].GetComponent<Piece>());
         }
     }
     public static bool IsPositionInBounds(Vector2 position) => !(position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8);
@@ -644,6 +677,7 @@ public sealed class Board : NetworkBehaviour
     public void MakeMove(Vector2Int startPosition, Vector2Int endPosition)
     {
         SyncBoard();
+        SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
         Piece piece = GetPieceAtPosition(startPosition);
         if (IsGameOver == true) return;
         if (((int)piece.Side) != _currentPlayer)
@@ -662,6 +696,7 @@ public sealed class Board : NetworkBehaviour
             {
                 OnCastle?.Invoke();
                 SyncBoard();
+                SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
                 RpcCastleInvoke();
                 return;
             }
@@ -699,6 +734,7 @@ public sealed class Board : NetworkBehaviour
                 movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition));
                 OnCapture?.Invoke(capturedPieceId);
                 SyncBoard();
+                SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
                 RpcCaptureInvoke(capturedPieceId);
                 return;
             }
@@ -726,6 +762,7 @@ public sealed class Board : NetworkBehaviour
                 // _capturedPieces[(Side)_currentPlayer].Add(_board[endPosition.y, endPosition.x]);
                 OnCapture?.Invoke(pieceId);
                 SyncBoard();
+                SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
                 RpcCaptureInvoke(pieceId);
             }
             else
@@ -757,6 +794,7 @@ public sealed class Board : NetworkBehaviour
             movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition, true));
             OnPromotion?.Invoke();
             SyncBoard();
+            SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
             RpcPromotionInvoke();
             return;
         }
@@ -767,6 +805,7 @@ public sealed class Board : NetworkBehaviour
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
         OnMakeMove?.Invoke();
         SyncBoard();
+        SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
         RpcMoveInvoke();
     }
 

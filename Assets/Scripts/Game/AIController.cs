@@ -2,8 +2,9 @@
 using UnityEngine;
 using System.Threading.Tasks;
 using Stockfish.NET;
+using Mirror;
 
-public class AIController : MonoBehaviour
+public class AIController : NetworkBehaviour
 {
     [SerializeField] private Side _player = Side.black;
     [SerializeField] private Board _board;
@@ -11,11 +12,28 @@ public class AIController : MonoBehaviour
 
     private void Start()
     {
-        _stockfish = new Stockfish.NET.Core.Stockfish($"{Application.dataPath}/stockfish-windows-x86-64.exe");
-        _stockfish.SkillLevel = 1;
+        InitStockfish();
         _board.OnMakeMove.AddListener(OnMakeMove);
         _board.OnCastle.AddListener(OnMakeMove);
         _board.OnPromotion.AddListener(OnMakeMove);
+    }
+
+    public void InitStockfish()
+    {
+        if (!PlayerPrefs.HasKey("StockfishPath"))
+        {
+            return;
+        }
+        if (!PlayerPrefs.HasKey("SkillLevel"))
+        {
+            PlayerPrefs.SetInt("SkillLevel", 1);
+        }
+        string pathToStockfish = PlayerPrefs.GetString("StockfishPath");
+        int stockfishSkillLevel = PlayerPrefs.GetInt("SkillLevel");
+        _stockfish = new Stockfish.NET.Core.Stockfish(pathToStockfish)
+        {
+            SkillLevel = 1
+        };
     }
 
     private void OnMakeMove()

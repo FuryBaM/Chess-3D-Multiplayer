@@ -4,7 +4,7 @@ using Mirror;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameStatusView : MonoBehaviour
+public class GameStatusView : NetworkBehaviour
 {
     [SerializeField] private Board _board;
     [SerializeField] private MoveUIElement _moveElementPrefab;
@@ -56,8 +56,10 @@ public class GameStatusView : MonoBehaviour
         _board.OnStalemate.RemoveListener(OnMate);
         _board.OnPromotion.RemoveListener(OnMove);
     }
+    [ClientCallback]
     private void OnMove()
     {
+        if (isServer) return;
         MoveUIElement _currentMoveElement;
         print(_board.Player);
         if (_board.Player == 1)
@@ -84,8 +86,10 @@ public class GameStatusView : MonoBehaviour
             _currentMoveElement.SetBlackMove(MoveConverter.ConvertMoveToString(move, piece));
         }
     }
+    [ClientCallback]
     private void OnCapture(uint capturedPieceId)
     {
+        if (isServer) return;
         Piece piece = NetworkClient.spawned[capturedPieceId].GetComponent<Piece>();
         // Увеличиваем счет за захваты
         int captureValue = GetPieceValue(piece);
@@ -101,7 +105,7 @@ public class GameStatusView : MonoBehaviour
         // Обновляем отображение счета за захваты
         UpdateCaptures();
     }
-
+    [ClientCallback]
     private int GetPieceValue(Piece piece)
     {
         if (piece.GetType() == typeof(Pawn))
@@ -135,23 +139,28 @@ public class GameStatusView : MonoBehaviour
             return 0; // Для случая, если тип фигуры не совпадает с ожидаемыми
         }
     }
+    [ClientCallback]
     private void OnCheck()
     {
         // Дополнительные действия при шахе
     }
+    [ClientCallback]
     private void OnMate()
     {
         // Дополнительные действия при мате
     }
+    [ClientCallback]
     private void OnCastle()
     {
         OnMove();
     }
+    [ClientCallback]
     private void UpdateCaptures()
     {
         UpdateCapturedPieces(_whiteCapturesImage, _whiteCapturedPieces, _board.CapturedPieces[Side.white]);
         UpdateCapturedPieces(_blackCapturesImage, _blackCapturedPieces, _board.CapturedPieces[Side.black]);
     }
+    [ClientCallback]
     private void UpdateCapturedPieces(Image capturesImage, List<Image> capturedPieces, List<Piece> pieces)
     {
         // Удаляем все текущие отображаемые фигуры
@@ -180,7 +189,7 @@ public class GameStatusView : MonoBehaviour
             }
         }
     }
-
+    [ClientCallback]
     private Sprite GetPieceSprite(Piece piece)
     {
         if (piece.GetType() == typeof(Pawn))

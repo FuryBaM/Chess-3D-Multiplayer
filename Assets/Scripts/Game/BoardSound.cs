@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using Mirror;
+using UnityEngine;
 
-public class BoardSound : MonoBehaviour
+public class BoardSound : NetworkBehaviour
 {
     [SerializeField] private Board _board;
     [SerializeField] private AudioClip _moveSound;
@@ -34,26 +35,32 @@ public class BoardSound : MonoBehaviour
         _board.OnCastle.RemoveListener(OnCastle);
         _board.OnStalemate.RemoveListener(OnMate);
     }
+    [ClientCallback]
     private void OnMove()
     {
         _audioSource.PlayOneShot(_moveSound);
     }
+    [ClientCallback]
     private void OnCapture(uint pieceId)
     {
         _audioSource.PlayOneShot(_captureSound);
     }
+    [ClientCallback]
     private void OnCheck()
     {
         _audioSource.PlayOneShot(_checkSound);
     }
+    [ClientCallback]
     private void OnMate()
     {
         _audioSource.PlayOneShot(_mateSound);
     }
+    [ClientCallback]
     private void OnCastle()
     {
         _audioSource.PlayOneShot(_castleSound);
     }
+    [ClientCallback]
     private void OnPromotion()
     {
         _audioSource.PlayOneShot(_promoteSound);

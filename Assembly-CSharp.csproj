@@ -59,7 +59,7 @@
     <UnityVersion>2020.1.6f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Users\АхметовАкжол\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.0.1\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="C:\Users\АхметовАкжол\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.0.2\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Stockfish.NET\Exceptions\MaxTriesException.cs" />
@@ -86,6 +86,11 @@
     <Compile Include="Assets\Scripts\PieceLogic\Bishop.cs" />
     <Compile Include="Assets\Stockfish.NET\Models\Color.cs" />
     <Compile Include="Assets\Stockfish.NET\Core\Stockfish.cs" />
+    <Compile Include="Assets\Scripts\CameraPositionChanger.cs" />
+    <Compile Include="Assets\Scripts\GameSettings.cs" />
+    <Compile Include="Assets\Scripts\NetworkPlayerLobby.cs" />
+    <Compile Include="Assets\Scripts\ServerList\ServerConnectElement.cs" />
+    <Compile Include="Assets\Scripts\ServerList\ServerListViewer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Mirror\Plugins\Mono.Cecil\Mono.CecilX.dll" />
