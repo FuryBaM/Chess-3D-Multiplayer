@@ -530,7 +530,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 2065336819}
         m_TargetAssemblyTypeName: ServerListViewer, Assembly-CSharp
         m_MethodName: StartGame
         m_Mode: 1
@@ -975,7 +975,7 @@ MonoBehaviour:
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
   authenticator: {fileID: 0}
-  playerPrefab: {fileID: 0}
+  playerPrefab: {fileID: 8410257266287536891, guid: 09095e7e83e1d6949a1a969ea9ed9f78, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs:
