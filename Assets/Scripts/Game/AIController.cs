@@ -6,6 +6,7 @@ using Mirror;
 
 public class AIController : NetworkBehaviour
 {
+    [SyncVar]
     [SerializeField] private Side _player = Side.black;
     [SerializeField] private Board _board;
     private IStockfish _stockfish;
@@ -13,6 +14,7 @@ public class AIController : NetworkBehaviour
     private void Start()
     {
         InitStockfish();
+        _board = FindObjectOfType<Board>();
         _board.OnMakeMove.AddListener(OnMakeMove);
         _board.OnCastle.AddListener(OnMakeMove);
         _board.OnPromotion.AddListener(OnMakeMove);
@@ -53,7 +55,24 @@ public class AIController : NetworkBehaviour
         }
         string moveString = calculateMoveTask.Result;
         Move gameMove = _board.ConvertStringToMove(moveString);
-        _board.MakeMove(gameMove.StartPosition, gameMove.EndPosition);
+        MovePiece(gameMove.StartPosition, gameMove.EndPosition);
+    }
+    [TargetRpc]
+    public void OnSideChanged(Side newSide)
+    {
+        print($"Side changed {newSide}");
+    }
+    [Server]
+    public void SetPlayerSide(Side side)
+    {
+        _player = side;
+        OnSideChanged(side);
+    }
+    [Server]
+    public void MovePiece(Vector2Int startPosition, Vector2Int endPosition)
+    {
+        Debug.Log("Called move");
+        _board.MakeMove(startPosition, endPosition);
     }
 
     private string CalculateBestMove()

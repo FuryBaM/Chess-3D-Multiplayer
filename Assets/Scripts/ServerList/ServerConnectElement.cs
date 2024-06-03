@@ -1,23 +1,21 @@
 ﻿using System.Net;
 using kcp2k;
 using Mirror;
+using Mirror.Discovery;
 using TMPro;
 using UnityEngine;
 
 public class ServerConnectElement : MonoBehaviour
 {
-    private IPAddress _ipAddress;
-    private ushort _port;
+    private ServerResponse _info;
     [SerializeField] private TextMeshProUGUI _nameText;
-    public void SetServerData(IPAddress address, ushort port)
+    public void SetServerData(ServerResponse info)
     {
-        _ipAddress = address;
-        _port = port;
+        _info = info;
+        _nameText.text = $"{_info.uri.Host}:{_info.uri.Port}";
     }
     public void JoinServer()
     {
-        NetworkManager.singleton.networkAddress = _ipAddress.ToString();
-        NetworkManager.singleton.GetComponent<KcpTransport>().port = _port;
-        NetworkManager.singleton.StartClient();
+        NetworkManager.singleton.StartClient(_info.uri);
     }
 }

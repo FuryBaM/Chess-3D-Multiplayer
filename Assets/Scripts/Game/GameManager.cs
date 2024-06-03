@@ -1,11 +1,17 @@
 ﻿using System;
 using Mirror;
+using Mirror.Discovery;
 using UnityEngine;
 
 public class GameManager : NetworkBehaviour
 {
     [SerializeField] private Board _board;
     private bool _playersReady = false;
+
+    private void Start()
+    {
+        Debug.Log(Utils.IsHeadless());
+    }
 
     private void OnCheck()
     {

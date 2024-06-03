@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7973082109655993635}
   - component: {fileID: 7973082109655993634}
+  - component: {fileID: 8614005394458675740}
   m_Layer: 0
   m_Name: AI Player
   m_TagString: Untagged
@@ -43,5 +44,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2d25e3c37401bc4682eb62476ee5852, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   _player: 1
   _board: {fileID: 0}
+--- !u!114 &8614005394458675740
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7973082109655993661}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  _assetId: 3582133705
+  serverOnly: 1
+  visibility: 0
+  hasSpawned: 0

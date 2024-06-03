@@ -10,6 +10,17 @@ public class GameSettings : MonoBehaviour
     [SerializeField] private InputField _stockfishPathInputField;
     [SerializeField] private Slider _skillLevelSlider;
     [SerializeField] private TextMeshProUGUI _skillLevelText;
+    private void Awake()
+    {
+        if (PlayerPrefs.HasKey("SkillLevel"))
+        {
+            _skillLevelSlider.value = PlayerPrefs.GetInt("SkillLevel");
+        }
+        if (PlayerPrefs.HasKey("StockfishPath"))
+        {
+            _stockfishPathInputField.text = PlayerPrefs.GetString("StockfishPath");
+        }
+    }
     public void SetStockfishPath()
     {
         if (!File.Exists(_stockfishPathInputField.text))

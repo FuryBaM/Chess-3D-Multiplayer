@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 1322509657007946305}
   - component: {fileID: 1322509657003604405}
   - component: {fileID: 1322509657005682461}
+  - component: {fileID: 820407291599491095}
   m_Layer: 8
   m_Name: Board
   m_TagString: Board
@@ -109,16 +110,66 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ea1dc43ffd19864d9f89851c56c731f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  whiteKing: {fileID: 4898198514327697492, guid: bcdd5494ebe11e04db0730252d5a747e, type: 3}
-  whitePawn: {fileID: 1546576701808714517, guid: 3162a8ea4088ca646ba0b51f6dd921fb, type: 3}
-  whiteKnight: {fileID: 4069687616489921538, guid: 1b7290d0cb09aab4cbd1d5c69689471a, type: 3}
-  whiteBishop: {fileID: 6774532322649255907, guid: a9910ea399ec81c408cfcf941d07a68f, type: 3}
-  whiteRook: {fileID: 3830291950273231241, guid: 24ac45bf575fce947856689d0455e7c7, type: 3}
-  whiteQueen: {fileID: 2881595045428511456, guid: f65fe2dc6572dcd4d9b476517da6fe3b, type: 3}
-  blackKing: {fileID: 284504621604450956, guid: 82b953d74a5436b4e9114d9fd390e9b6, type: 3}
-  blackPawn: {fileID: 8325558458644291126, guid: bf442341aaebad34e9da1fd76dfec175, type: 3}
-  blackKnight: {fileID: 7258399491157882849, guid: e3f19f6cfdf18604596149cc374e237d, type: 3}
-  blackBishop: {fileID: 3661300826838281664, guid: 21afb11f3701f8d428627236b4dd2e65, type: 3}
-  blackRook: {fileID: 1745620459207575977, guid: d8d9cbd90a5acce4c809fa356fc9641d, type: 3}
-  blackQueen: {fileID: 5803467451483545242, guid: d856642a63bfb5145a755b6e71086d7c, type: 3}
-  _selectedPiece: {fileID: 0}
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  OnCheck:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMate:
+    m_PersistentCalls:
+      m_Calls: []
+  OnStalemate:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCapture:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMakeMove:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCastle:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPromotion:
+    m_PersistentCalls:
+      m_Calls: []
+  _moveDuration: 1
+  _pieceMovementCurve:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  _highlightPrefab: {fileID: 0}
+  _hightlightCapturablePrefab: {fileID: 0}
+  whiteKing: {fileID: 0}
+  whitePawn: {fileID: 0}
+  whiteKnight: {fileID: 0}
+  whiteBishop: {fileID: 0}
+  whiteRook: {fileID: 0}
+  whiteQueen: {fileID: 0}
+  blackKing: {fileID: 0}
+  blackPawn: {fileID: 0}
+  blackKnight: {fileID: 0}
+  blackBishop: {fileID: 0}
+  blackRook: {fileID: 0}
+  blackQueen: {fileID: 0}
+  fen: 
+--- !u!114 &820407291599491095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1322509657005777665}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  _assetId: 1219493959
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
