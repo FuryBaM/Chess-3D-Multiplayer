@@ -52,6 +52,10 @@ public class GameManager : NetworkBehaviour
             GiveColor();
             _board.SyncBoard();
         }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            NetworkManager.singleton.StopHost();
+        }
     }
 
     private void OnConnected(NetworkConnectionToClient client)

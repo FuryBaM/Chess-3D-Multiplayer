@@ -6,6 +6,9 @@ TagManager:
   tags:
   - Board
   - Piece
+  - MoveContent
+  - WhitePieceContent
+  - BlackPieceContent
   layers:
   - Default
   - TransparentFX

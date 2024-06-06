@@ -13,11 +13,18 @@ public class AIController : NetworkBehaviour
 
     private void Start()
     {
+        if (!isServer) return;
+        MessageClient("Im server");
         InitStockfish();
         _board = FindObjectOfType<Board>();
         _board.OnMakeMove.AddListener(OnMakeMove);
         _board.OnCastle.AddListener(OnMakeMove);
         _board.OnPromotion.AddListener(OnMakeMove);
+    }
+    [ClientRpc]
+    private void MessageClient(string message)
+    {
+        print(message);
     }
 
     public void InitStockfish()
@@ -34,12 +41,18 @@ public class AIController : NetworkBehaviour
         int stockfishSkillLevel = PlayerPrefs.GetInt("SkillLevel");
         _stockfish = new Stockfish.NET.Core.Stockfish(pathToStockfish)
         {
-            SkillLevel = 1
+            SkillLevel = stockfishSkillLevel
         };
     }
 
     private void OnMakeMove()
     {
+        MakeMove();
+    }
+    [Server]
+    public void MakeMove()
+    {
+        if (!isServer) return;
         if ((Side)_board.Player != _player || _board.IsGameOver) return;
         StartCoroutine(MakeMoveAsync());
     }
@@ -57,21 +70,14 @@ public class AIController : NetworkBehaviour
         Move gameMove = _board.ConvertStringToMove(moveString);
         MovePiece(gameMove.StartPosition, gameMove.EndPosition);
     }
-    [TargetRpc]
-    public void OnSideChanged(Side newSide)
-    {
-        print($"Side changed {newSide}");
-    }
-    [Server]
     public void SetPlayerSide(Side side)
     {
         _player = side;
-        OnSideChanged(side);
     }
     [Server]
     public void MovePiece(Vector2Int startPosition, Vector2Int endPosition)
     {
-        Debug.Log("Called move");
+        Debug.Log("Called move ai");
         _board.MakeMove(startPosition, endPosition);
     }
 

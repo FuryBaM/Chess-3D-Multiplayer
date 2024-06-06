@@ -9,20 +9,18 @@ public class GameStatusView : NetworkBehaviour
     [SerializeField] private Board _board;
     [SerializeField] private MoveUIElement _moveElementPrefab;
     [SerializeField] private RectTransform _moveContent;
-    [SerializeField] private Sprite _whiteKingSprite;
-    [SerializeField] private Sprite _whitePawnSprite;
-    [SerializeField] private Sprite _whiteKnightSprite;
-    [SerializeField] private Sprite _whiteBishopSprite;
-    [SerializeField] private Sprite _whiteRookSprite;
-    [SerializeField] private Sprite _whiteQueenSprite;
-    [SerializeField] private Sprite _blackKingSprite;
-    [SerializeField] private Sprite _blackPawnSprite;
-    [SerializeField] private Sprite _blackKnightSprite;
-    [SerializeField] private Sprite _blackBishopSprite;
-    [SerializeField] private Sprite _blackRookSprite;
-    [SerializeField] private Sprite _blackQueenSprite;
-    [SerializeField] private Image _whiteCapturesImage;
-    [SerializeField] private Image _blackCapturesImage;
+    [SerializeField] private Image _whiteKingSprite;
+    [SerializeField] private Image _whitePawnSprite;
+    [SerializeField] private Image _whiteKnightSprite;
+    [SerializeField] private Image _whiteBishopSprite;
+    [SerializeField] private Image _whiteRookSprite;
+    [SerializeField] private Image _whiteQueenSprite;
+    [SerializeField] private Image _blackKingSprite;
+    [SerializeField] private Image _blackPawnSprite;
+    [SerializeField] private Image _blackKnightSprite;
+    [SerializeField] private Image _blackBishopSprite;
+    [SerializeField] private Image _blackRookSprite;
+    [SerializeField] private Image _blackQueenSprite;
     private List<MoveUIElement> _currentMoveElements = new List<MoveUIElement>();
     private List<Image> _whiteCapturedPieces = new List<Image>();
     private List<Image> _blackCapturedPieces = new List<Image>();
@@ -32,6 +30,7 @@ public class GameStatusView : NetworkBehaviour
 
     private void Start()
     {
+        AddMove();
         UpdateCaptures();
     }
 
@@ -56,40 +55,42 @@ public class GameStatusView : NetworkBehaviour
         _board.OnStalemate.RemoveListener(OnMate);
         _board.OnPromotion.RemoveListener(OnMove);
     }
-    [ClientCallback]
+    [Server]
+    private MoveUIElement AddMove()
+    {
+        MoveUIElement currentMoveElement = Instantiate(_moveElementPrefab);
+        _currentMoveElements.Add(currentMoveElement);
+        NetworkServer.Spawn(currentMoveElement.gameObject);
+        return currentMoveElement;
+    }
     private void OnMove()
     {
-        if (isServer) return;
-        MoveUIElement _currentMoveElement;
-        print(_board.Player);
-        if (_board.Player == 1)
+        MoveUIElement currentMoveElement;
+        if (_board.Player == 0)
         {
-            _currentMoveElement = Instantiate(_moveElementPrefab, _moveContent);
-            _currentMoveElements.Add(_currentMoveElement);
+            currentMoveElement = AddMove();
         }
         else
         {
-            if (_currentMoveElements.Count == 0) return;
-            _currentMoveElement = _currentMoveElements.Last();
+            currentMoveElement = _currentMoveElements.Last();
         }
 
-        _currentMoveElement.SetMoveNumeration(_board.CurrentMove / 2);
+        currentMoveElement.SetMoveNumeration(_board.CurrentMove / 2);
         if (_board.MovedPieces.Count == 0) return;
         Move move = _board.GetLastMove();
         Piece piece = move.MovedPiece;
         if (1 - _board.Player == 0)
         {
-            _currentMoveElement.SetWhiteMove(MoveConverter.ConvertMoveToString(move, piece));
+            currentMoveElement.SetWhiteMove(MoveConverter.ConvertMoveToString(move, piece));
         }
         else
         {
-            _currentMoveElement.SetBlackMove(MoveConverter.ConvertMoveToString(move, piece));
+            currentMoveElement.SetBlackMove(MoveConverter.ConvertMoveToString(move, piece));
         }
     }
-    [ClientCallback]
+    
     private void OnCapture(uint capturedPieceId)
     {
-        if (isServer) return;
         Piece piece = NetworkClient.spawned[capturedPieceId].GetComponent<Piece>();
         // Увеличиваем счет за захваты
         int captureValue = GetPieceValue(piece);
@@ -105,7 +106,7 @@ public class GameStatusView : NetworkBehaviour
         // Обновляем отображение счета за захваты
         UpdateCaptures();
     }
-    [ClientCallback]
+    
     private int GetPieceValue(Piece piece)
     {
         if (piece.GetType() == typeof(Pawn))
@@ -139,34 +140,34 @@ public class GameStatusView : NetworkBehaviour
             return 0; // Для случая, если тип фигуры не совпадает с ожидаемыми
         }
     }
-    [ClientCallback]
+    
     private void OnCheck()
     {
         // Дополнительные действия при шахе
     }
-    [ClientCallback]
+    
     private void OnMate()
     {
         // Дополнительные действия при мате
     }
-    [ClientCallback]
+    
     private void OnCastle()
     {
         OnMove();
     }
-    [ClientCallback]
+    
     private void UpdateCaptures()
     {
-        UpdateCapturedPieces(_whiteCapturesImage, _whiteCapturedPieces, _board.CapturedPieces[Side.white]);
-        UpdateCapturedPieces(_blackCapturesImage, _blackCapturedPieces, _board.CapturedPieces[Side.black]);
+        UpdateCapturedPieces(Side.white, _whiteCapturedPieces, _board.CapturedPieces[Side.white]);
+        UpdateCapturedPieces(Side.black, _blackCapturedPieces, _board.CapturedPieces[Side.black]);
     }
-    [ClientCallback]
-    private void UpdateCapturedPieces(Image capturesImage, List<Image> capturedPieces, List<Piece> pieces)
+    
+    private void UpdateCapturedPieces(Side side, List<Image> capturedPieces, List<Piece> pieces)
     {
         // Удаляем все текущие отображаемые фигуры
         foreach (var capturedPiece in capturedPieces)
         {
-            Destroy(capturedPiece.gameObject);
+            NetworkServer.Destroy(capturedPiece.gameObject);
         }
         capturedPieces.Clear();
 
@@ -175,22 +176,19 @@ public class GameStatusView : NetworkBehaviour
         foreach (var piece in pieces)
         {
             // Получаем спрайт в зависимости от типа фигуры и ее цвета
-            Sprite sprite = GetPieceSprite(piece);
+            Image sprite = GetPieceSprite(piece);
             if (sprite != null && capturedPieces.Count < maxSprites)
             {
                 // Создаем новую отображаемую фигуру с соответствующим спрайтом
-                GameObject capturedPieceObject = new GameObject("CapturedPiece");
-                capturedPieceObject.transform.SetParent(capturesImage.transform, false);
-                Image capturedPieceImage = capturedPieceObject.AddComponent<Image>();
-                capturedPieceImage.sprite = sprite;
-                capturedPieceImage.rectTransform.localScale = Vector3.one;
+                Image capturedPieceImage = Instantiate(sprite);
                 capturedPieceImage.rectTransform.sizeDelta = new Vector2(50, 50);
+                NetworkServer.Spawn(capturedPieceImage.gameObject);
                 capturedPieces.Add(capturedPieceImage);
             }
         }
     }
-    [ClientCallback]
-    private Sprite GetPieceSprite(Piece piece)
+    
+    private Image GetPieceSprite(Piece piece)
     {
         if (piece.GetType() == typeof(Pawn))
         {

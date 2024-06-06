@@ -7,6 +7,10 @@ public class MoveUIElement : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _numeration;
     [SerializeField] private TextMeshProUGUI _whiteMove;
     [SerializeField] private TextMeshProUGUI _blackMove;
+    private void Start()
+    {
+        transform.SetParent(GameObject.FindGameObjectWithTag("MoveContent").transform);
+    }
     public void SetMoveNumeration(int numeration)
     {
         _numeration.text = numeration.ToString() + ".";

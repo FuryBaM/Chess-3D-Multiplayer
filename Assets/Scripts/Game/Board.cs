@@ -167,14 +167,7 @@ public sealed class Board : NetworkBehaviour
             case SyncList<uint>.Operation.OP_ADD:
             {
                 Piece piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
-                if (_capturedPieces.Count == itemIndex)
-                {
-                    _capturedPieces[Side.white][itemIndex] = piece;
-                }
-                else
-                {
-                    _capturedPieces[Side.white].Add(piece);
-                }
+                _capturedPieces[Side.white].Add(piece);
                 break;
             }
         }
@@ -358,6 +351,16 @@ public sealed class Board : NetworkBehaviour
         SyncBoard();
     }
     [Server]
+    private void UpdateBoardAtPosition(Vector2Int position, Piece piece)
+    {
+        int x = position.x;
+        int y = position.y;
+        if (piece != null)
+            boardState[y * 8 + x] = (int)piece.netId;
+        else
+            boardState[y * 8 + x] = -1;
+    }
+    [Server]
     public void SyncBoard()
     {
         for (int i = 0; i < 8; i++)
@@ -454,11 +457,11 @@ public sealed class Board : NetworkBehaviour
         GameObject highlight;
         if (selfPiece)
         {
-            highlight = Instantiate(_hightlightCapturablePrefab, new Vector3(position.x, 0, position.y), Quaternion.AngleAxis(90, Vector3.right));
+            highlight = Instantiate(_hightlightCapturablePrefab, new Vector3(position.x, 0.01f, position.y), Quaternion.AngleAxis(90, Vector3.right));
         }
         else
         {
-            highlight = Instantiate(_highlightPrefab, new Vector3(position.x, 0, position.y), Quaternion.AngleAxis(90, Vector3.right));
+            highlight = Instantiate(_highlightPrefab, new Vector3(position.x, 0.01f, position.y), Quaternion.AngleAxis(90, Vector3.right));
         }
         _highlights.Add(highlight);
     }
@@ -672,12 +675,17 @@ public sealed class Board : NetworkBehaviour
         }
         piece.transform.position = end;
     }
-
-    #region MakeMove
-    public void MakeMove(Vector2Int startPosition, Vector2Int endPosition)
+    [Server]
+    private void SyncAllData()
     {
         SyncBoard();
         SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
+    }
+
+    #region MakeMove
+    [Server]
+    public void MakeMove(Vector2Int startPosition, Vector2Int endPosition)
+    {
         Piece piece = GetPieceAtPosition(startPosition);
         if (IsGameOver == true) return;
         if (((int)piece.Side) != _currentPlayer)
@@ -695,8 +703,6 @@ public sealed class Board : NetworkBehaviour
             if (canMove)
             {
                 OnCastle?.Invoke();
-                SyncBoard();
-                SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
                 RpcCastleInvoke();
                 return;
             }
@@ -729,12 +735,12 @@ public sealed class Board : NetworkBehaviour
                 }
                 _board[enPassantCapturePosition.y, enPassantCapturePosition.x] = null;
                 _board[endPosition.y, endPosition.x] = piece;
+                UpdateBoardAtPosition(enPassantCapturePosition, null);
+                UpdateBoardAtPosition(endPosition, piece);
                 _currentPlayer = 1 - _currentPlayer;
                 _currentMove++;
                 movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition));
                 OnCapture?.Invoke(capturedPieceId);
-                SyncBoard();
-                SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
                 RpcCaptureInvoke(capturedPieceId);
                 return;
             }
@@ -743,13 +749,14 @@ public sealed class Board : NetworkBehaviour
         if (!IsEmptyCell(endPosition) && piece.CanCapture(startPosition, endPosition, this) && _board[endPosition.y, endPosition.x].Side != (Side)_currentPlayer)
         {
             Piece[,] cloneBoard = GameBoard;
+            Piece pieceToCapture = _board[endPosition.y, endPosition.x];
             _board[endPosition.y, endPosition.x] = piece;
             _board[startPosition.y, startPosition.x] = null;
             if (!IsKingInCheck((Side)_currentPlayer))
             {
                 _board = cloneBoard;
-                uint pieceId = _board[endPosition.y, endPosition.x].GetComponent<NetworkIdentity>().netId;
-                _board[endPosition.y, endPosition.x].gameObject.SetActive(false);
+                uint pieceId = pieceToCapture.netId;
+                pieceToCapture.gameObject.SetActive(false);
                 RpcDeactivatePiece(pieceId);
                 if (_currentPlayer == (int)Side.white)
                 {
@@ -759,10 +766,7 @@ public sealed class Board : NetworkBehaviour
                 {
                     blackCaptures.Add(_board[endPosition.y, endPosition.x].netId);
                 }
-                // _capturedPieces[(Side)_currentPlayer].Add(_board[endPosition.y, endPosition.x]);
                 OnCapture?.Invoke(pieceId);
-                SyncBoard();
-                SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
                 RpcCaptureInvoke(pieceId);
             }
             else
@@ -781,6 +785,11 @@ public sealed class Board : NetworkBehaviour
             _board = clone;
             return;
         }
+        else
+        {
+            UpdateBoardAtPosition(endPosition, piece);
+            UpdateBoardAtPosition(startPosition, null);
+        }
 
         movedPiecesData.Add(piece.netId);
         _currentPlayer = 1 - _currentPlayer;
@@ -793,8 +802,6 @@ public sealed class Board : NetworkBehaviour
             _movesHistory.Add(new Move(piece, false, startPosition, endPosition, true));
             movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition, true));
             OnPromotion?.Invoke();
-            SyncBoard();
-            SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
             RpcPromotionInvoke();
             return;
         }
@@ -804,8 +811,6 @@ public sealed class Board : NetworkBehaviour
         }
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
         OnMakeMove?.Invoke();
-        SyncBoard();
-        SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
         RpcMoveInvoke();
     }
 
@@ -919,7 +924,6 @@ public sealed class Board : NetworkBehaviour
         return false;
     }
 
-
     private bool AllPiecesHaveNoMoves(Side currentPlayer)
     {
         for (int i = 0; i < _board.GetLength(0); i++)
@@ -999,10 +1003,16 @@ public sealed class Board : NetworkBehaviour
 
         movedPiecesData.Add(king.netId);
         movedPiecesData.Add(rook.netId);
+        //Castling
         _board[rank, kingStartFile] = null;
         _board[rank, rookStartFile] = null;
         _board[rank, kingEndFile] = king;
         _board[rank, rookEndFile] = rook;
+        //Synching board
+        UpdateBoardAtPosition(new Vector2Int(kingStartFile, rank), null);
+        UpdateBoardAtPosition(new Vector2Int(rookStartFile, rank), null);
+        UpdateBoardAtPosition(new Vector2Int(kingEndFile, rank), king);
+        UpdateBoardAtPosition(new Vector2Int(rookEndFile, rank), rook);
         _currentPlayer = 1 - _currentPlayer;
         _currentMove++;
         movesHistoryData.Add(new MoveData(king.netId, true, new Vector2Int(kingStartFile, rank), new Vector2Int(kingEndFile, rank)));

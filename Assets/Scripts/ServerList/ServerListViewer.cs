@@ -6,42 +6,49 @@ using kcp2k;
 using Mirror;
 using Mirror.Discovery;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ServerListViewer : MonoBehaviour
 {
-    private Dictionary<long, ServerResponse> foundServers = new Dictionary<long, ServerResponse>();
+    private Dictionary<long, ServerResponse> _foundServers = new Dictionary<long, ServerResponse>();
     [SerializeField] private NetworkDiscovery _networkDiscovery;
     [SerializeField] private ServerConnectElement _serverPrefab;
     [SerializeField] private Transform _serverContent;
+    [SerializeField] private Button _hostButton;
+    [SerializeField] private Button _refreshListButton;
     private List<ServerConnectElement> _serversOnScene = new List<ServerConnectElement>();
     private void Start()
     {
-        if (_networkDiscovery == null)
-        {
-            _networkDiscovery = GetComponent<NetworkDiscovery>();
-        }
+        _networkDiscovery = NetworkManager.singleton.GetComponent<NetworkDiscovery>();
         _networkDiscovery.StartDiscovery();
         print($"{_networkDiscovery.secretHandshake}");
+    }
+
+    private void OnEnable() 
+    {
+        _hostButton.onClick.AddListener(StartGame);
+        _refreshListButton.onClick.AddListener(UpdateVisuals);    
     }
 
     public void OnServerFound(ServerResponse info)
     {
         Debug.Log($"server found {info.serverId} {info.EndPoint.Address} {info.EndPoint.ToString()}");
-        foundServers[info.serverId] = info;
-        UpdateVisuals();
+        _foundServers[info.serverId] = info;
     }
 
     public void UpdateVisuals()
     {
+        _networkDiscovery.StartDiscovery();
         foreach(var serverObj in _serversOnScene)
         {
             Destroy(serverObj.gameObject);
         }
         _serversOnScene.Clear();
-        foreach (var server in foundServers)
+        foreach (var server in _foundServers)
         {
             AddServer(server.Value);
         }
+        _foundServers.Clear();
     }
 
     private void AddServer(ServerResponse info)
@@ -52,8 +59,8 @@ public class ServerListViewer : MonoBehaviour
     }
     public void StartGame()
     {
-        Debug.LogError($"{NetworkManager.singleton.networkAddress} {NetworkManager.singleton.GetComponent<KcpTransport>().port}");
-        NetworkManager.singleton.networkAddress = "localhost";
+        _foundServers.Clear();
         NetworkManager.singleton.StartHost();
+        _networkDiscovery.AdvertiseServer();
     }
 }

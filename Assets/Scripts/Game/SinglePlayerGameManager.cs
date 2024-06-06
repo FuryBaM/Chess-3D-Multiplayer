@@ -2,6 +2,7 @@ using System;
 using Mirror;
 using Mirror.Discovery;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SinglePlayerGameManager : NetworkBehaviour
 {
@@ -52,6 +53,10 @@ public class SinglePlayerGameManager : NetworkBehaviour
             GiveColor();
             _board.SyncBoard();
         }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            NetworkManager.singleton.StopHost();
+        }
     }
 
     private void OnConnected(NetworkConnectionToClient client)
@@ -68,8 +73,6 @@ public class SinglePlayerGameManager : NetworkBehaviour
     {
         PlayerController[] players = FindObjectsOfType<PlayerController>();
         players[0].SetPlayerSide(Side.white);
-        var ai = Instantiate(aIController);
-        NetworkServer.Spawn(ai.gameObject);
         _playerReady = true;
     }
 
