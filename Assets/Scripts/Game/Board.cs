@@ -98,6 +98,7 @@ public sealed class Board : NetworkBehaviour
     [SerializeField] GameObject blackBishop;
     [SerializeField] GameObject blackRook;
     [SerializeField] GameObject blackQueen;
+    private PromotionDataContainer _promotionDataContainer = new PromotionDataContainer();
 
     [Header("FEN Editor")]
     [SerializeField] private string fen;
@@ -166,7 +167,15 @@ public sealed class Board : NetworkBehaviour
         {
             case SyncList<uint>.Operation.OP_ADD:
             {
-                Piece piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem].GetComponent<Piece>();
+                }
                 _capturedPieces[Side.white].Add(piece);
                 break;
             }
@@ -183,7 +192,15 @@ public sealed class Board : NetworkBehaviour
         {
             case SyncList<uint>.Operation.OP_INSERT:
             {
-                Piece piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem].GetComponent<Piece>();
+                }
                 _capturedPieces[Side.white].Insert(itemIndex, piece);
                 break;
             }
@@ -200,7 +217,15 @@ public sealed class Board : NetworkBehaviour
         {
             case SyncList<uint>.Operation.OP_SET:
             {
-                Piece piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem].GetComponent<Piece>();
+                }
                 _capturedPieces[Side.white][itemIndex] = piece;
                 break;
             }
@@ -212,7 +237,15 @@ public sealed class Board : NetworkBehaviour
         {
             case SyncList<uint>.Operation.OP_ADD:
             {
-                Piece piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem].GetComponent<Piece>();
+                }
                 _capturedPieces[Side.black].Add(piece);
                 break;
             }
@@ -229,7 +262,15 @@ public sealed class Board : NetworkBehaviour
         {
             case SyncList<uint>.Operation.OP_INSERT:
             {
-                Piece piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem].GetComponent<Piece>();
+                }
                 _capturedPieces[Side.black].Insert(itemIndex, piece);
                 break;
             }
@@ -246,7 +287,15 @@ public sealed class Board : NetworkBehaviour
         {
             case SyncList<uint>.Operation.OP_SET:
             {
-                Piece piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem].GetComponent<Piece>();
+                }
                 _capturedPieces[Side.black][itemIndex] = piece;
                 break;
             }
@@ -259,7 +308,15 @@ public sealed class Board : NetworkBehaviour
         {
             case SyncSet<uint>.Operation.OP_ADD:
             {
-                Piece piece = NetworkClient.spawned[item].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[item].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[item].GetComponent<Piece>();
+                }
                 _movedPieces.Add(piece);
                 break;
             }
@@ -270,7 +327,15 @@ public sealed class Board : NetworkBehaviour
             }
             case SyncSet<uint>.Operation.OP_REMOVE:
             {
-                Piece piece = NetworkClient.spawned[item].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[item].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[item].GetComponent<Piece>();
+                }
                 _movedPieces.Remove(piece);
                 break;
             }
@@ -283,13 +348,29 @@ public sealed class Board : NetworkBehaviour
         {
             case SyncList<MoveData>.Operation.OP_ADD:
             {
-                Piece piece = NetworkClient.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                }
                 _movesHistory.Add(new Move(piece, newItem.Castle, newItem.StartPosition, newItem.EndPosition, newItem.Promotion));
                 break;
             }
             case SyncList<MoveData>.Operation.OP_INSERT:
             {
-                Piece piece = NetworkClient.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                }
                 _movesHistory.Insert(itemIndex, new Move(piece, newItem.Castle, newItem.StartPosition, newItem.EndPosition, newItem.Promotion));
                 break;
             }
@@ -305,7 +386,16 @@ public sealed class Board : NetworkBehaviour
             }
             case SyncList<MoveData>.Operation.OP_SET:
             {
-                _movesHistory[itemIndex].MovedPiece = NetworkClient.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                Piece piece;
+                if (!isServer)
+                {
+                    piece = NetworkClient.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                }
+                else
+                {
+                    piece = NetworkServer.spawned[newItem.MovedPieceId].GetComponent<Piece>();
+                }
+                _movesHistory[itemIndex].MovedPiece = piece;
                 _movesHistory[itemIndex].Castle = newItem.Castle;
                 _movesHistory[itemIndex].StartPosition = newItem.StartPosition;
                 _movesHistory[itemIndex].EndPosition = newItem.EndPosition;
@@ -334,7 +424,15 @@ public sealed class Board : NetworkBehaviour
                 }
                 else
                 {
-                    var piece = NetworkClient.spawned[(uint)netId].GetComponent<Piece>();
+                    Piece piece;
+                    if (!isServer)
+                    {
+                        piece = NetworkClient.spawned[(uint)netId].GetComponent<Piece>();
+                    }
+                    else
+                    {
+                        piece = NetworkServer.spawned[(uint)netId].GetComponent<Piece>();
+                    }
                     _board[y, x] = piece;
                 }
                 break;
@@ -378,32 +476,6 @@ public sealed class Board : NetworkBehaviour
             }
         }
         
-    }
-    [ClientRpc]
-    public void SyncData(int currentPlayer, int currentMove, List<MoveData> moveHistoryData, List<uint> movedPieces, List<uint> whiteCaptures, List<uint> blackCaptures)
-    {
-        _currentPlayer = currentPlayer;
-        _currentMove = currentMove;
-        _movesHistory.Clear();
-        foreach(var move in moveHistoryData)
-        {
-            _movesHistory.Add(new Move(NetworkClient.spawned[move.MovedPieceId].GetComponent<Piece>(), move.Castle, move.StartPosition, move.EndPosition, move.Promotion));
-        }
-        _movedPieces.Clear();
-        foreach(var pieceId in movedPieces)
-        {
-            _movedPieces.Add(NetworkClient.spawned[pieceId].GetComponent<Piece>());
-        }
-        _capturedPieces[Side.white].Clear();
-        foreach(var pieceId in whiteCaptures)
-        {
-            _capturedPieces[Side.white].Add(NetworkClient.spawned[pieceId].GetComponent<Piece>());
-        }
-        _capturedPieces[Side.white].Clear();
-        foreach(var pieceId in blackCaptures)
-        {
-            _capturedPieces[Side.black].Add(NetworkClient.spawned[pieceId].GetComponent<Piece>());
-        }
     }
     public static bool IsPositionInBounds(Vector2 position) => !(position.x < 0 || position.x >= 8 || position.y < 0 || position.y >= 8);
     public void ClearBoard()
@@ -679,7 +751,6 @@ public sealed class Board : NetworkBehaviour
     private void SyncAllData()
     {
         SyncBoard();
-        SyncData(_currentPlayer, _currentMove, movesHistoryData.ToList(), movedPiecesData.ToList(), whiteCaptures.ToList(), blackCaptures.ToList());
     }
 
     #region MakeMove
@@ -702,7 +773,6 @@ public sealed class Board : NetworkBehaviour
             canMove = Castle(endPosition.x > startPosition.x);
             if (canMove)
             {
-                OnCastle?.Invoke();
                 RpcCastleInvoke();
                 return;
             }
@@ -727,7 +797,6 @@ public sealed class Board : NetworkBehaviour
                 if (_currentPlayer == (int)Side.white)
                 {
                     whiteCaptures.Add(_board[enPassantCapturePosition.y, enPassantCapturePosition.x].netId);
-                    //_capturedPieces[(Side)_currentPlayer].Add(_board[enPassantCapturePosition.y, enPassantCapturePosition.x]);
                 }
                 else
                 {
@@ -740,7 +809,6 @@ public sealed class Board : NetworkBehaviour
                 _currentPlayer = 1 - _currentPlayer;
                 _currentMove++;
                 movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition));
-                OnCapture?.Invoke(capturedPieceId);
                 RpcCaptureInvoke(capturedPieceId);
                 return;
             }
@@ -766,7 +834,6 @@ public sealed class Board : NetworkBehaviour
                 {
                     blackCaptures.Add(_board[endPosition.y, endPosition.x].netId);
                 }
-                OnCapture?.Invoke(pieceId);
                 RpcCaptureInvoke(pieceId);
             }
             else
@@ -775,12 +842,12 @@ public sealed class Board : NetworkBehaviour
             }
         }
 
-        if (!canMove) return;
+        if (!canMove) return; //If you cant move then nothing happens
         Piece[,] clone = GameBoard;
         _board[endPosition.y, endPosition.x] = piece;
         _board[startPosition.y, startPosition.x] = null;
         
-        if (IsKingInCheck((Side)_currentPlayer))
+        if (IsKingInCheck((Side)_currentPlayer)) //If king is in check then revert the board state
         {
             _board = clone;
             return;
@@ -797,12 +864,16 @@ public sealed class Board : NetworkBehaviour
         
         if (piece is Pawn && (endPosition.y == 0 || endPosition.y == 7))
         {
-            char pieceChar = 'Q';
-            piece = PromotePawn(endPosition, 1 - _currentPlayer == 0 ? char.ToUpper(pieceChar) : char.ToLower(pieceChar));
-            _movesHistory.Add(new Move(piece, false, startPosition, endPosition, true));
-            movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition, true));
-            OnPromotion?.Invoke();
-            RpcPromotionInvoke();
+            PlayerController[] playerControllers = FindObjectsOfType<PlayerController>();
+            foreach (PlayerController playerController in playerControllers)
+            {
+                if (playerController.GetPlayerSide() != (Side)_currentPlayer)
+                {
+                    SetPromotionData(startPosition, endPosition);
+                    RequestPromotion(playerController.connectionToClient);
+                    break;
+                }
+            }
             return;
         }
         else
@@ -810,11 +881,60 @@ public sealed class Board : NetworkBehaviour
             movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition));
         }
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
-        OnMakeMove?.Invoke();
         RpcMoveInvoke();
     }
-
     #endregion
+    #region Pawn Promotion
+    [TargetRpc]
+    private void RequestPromotion(NetworkConnection target)
+    {
+        ClientUI.singleton.ShowPromotionPanel();
+    }
+    [Server]
+    private void SetPromotionData(Vector2Int startPosition, Vector2Int endPosition)
+    {
+        _promotionDataContainer.StartPosition = startPosition;
+        _promotionDataContainer.EndPosition = endPosition;
+    }
+    public void RequestPawnPromotion(PieceType pieceType)
+    {
+        CmdPromotePawn((char)pieceType);
+    }
+    [Command(requiresAuthority = false)]
+    public void CmdPromotePawn(char pieceChar)
+    {
+        Vector2Int startPosition = _promotionDataContainer.StartPosition;
+        Vector2Int endPosition = _promotionDataContainer.EndPosition;
+        Piece piece = PromotePawn(startPosition, endPosition, 1 - _currentPlayer == 0 ? char.ToUpper(pieceChar) : char.ToLower(pieceChar));
+    }
+    [Server]
+    private Piece PromotePawn(Vector2Int startPosition, Vector2Int endPosition, char newPieceChar = 'q')
+    {
+        Piece pawn = GetPieceAtPosition(endPosition);
+        if (pawn == null || !(pawn is Pawn))
+        {
+            Debug.LogError("No pawn found at the specified position.");
+            return null;
+        }
+        NetworkServer.Destroy(pawn.gameObject);
+        Piece newPiece = SpawnPieceByChar(newPieceChar);
+        newPiece.transform.position = new Vector3(startPosition.x, 0, startPosition.y);
+        StartCoroutine(MovePieceSmoothly(newPiece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
+        
+        if (newPiece == null)
+        {
+            Debug.LogError("Invalid piece character.");
+            return null;
+        }
+
+        _board[endPosition.y, endPosition.x] = newPiece;
+        UpdateBoardAtPosition(endPosition, newPiece);
+        movesHistoryData.Add(new MoveData(newPiece.netId, false, startPosition, endPosition, true));
+        RpcPromotionInvoke();
+        return newPiece;
+    }
+    #endregion
+    #region ClientRequest
     [ClientRpc]
     private void RpcActivatePiece(uint pieceId)
     {
@@ -860,6 +980,7 @@ public sealed class Board : NetworkBehaviour
     {
         OnPromotion?.Invoke();
     }
+    #endregion
     private void OnMove()
     {
         if (!isServer) return;
@@ -943,29 +1064,6 @@ public sealed class Board : NetworkBehaviour
         }
         return true;
     }
-    #region Pawn Promotion
-    public Piece PromotePawn(Vector2Int position, char newPieceChar = 'q')
-    {
-        Piece pawn = GetPieceAtPosition(position);
-        if (pawn == null || !(pawn is Pawn))
-        {
-            Debug.LogError("No pawn found at the specified position.");
-            return null;
-        }
-
-        Piece newPiece = SpawnPieceByChar(newPieceChar);
-        if (newPiece == null)
-        {
-            Debug.LogError("Invalid piece character.");
-            return null;
-        }
-
-        _board[position.y, position.x] = newPiece;
-        Destroy(pawn.gameObject);
-        newPiece.transform.position = new Vector3(position.x, 0, position.y);
-        return newPiece;
-    }
-    #endregion
     #region Castle
     public bool Castle(bool isShortCastle)
     {
@@ -1110,3 +1208,30 @@ public sealed class Board : NetworkBehaviour
     }
 }
 
+public struct PromotionDataContainer
+{
+    private Vector2Int _startPosition;
+    public Vector2Int StartPosition 
+    {
+        get => _startPosition;
+        set
+        {
+            if (Board.IsPositionInBounds(value))
+            {
+                _startPosition = value;
+            }
+        }
+    }
+    private Vector2Int _endPosition;
+    public Vector2Int EndPosition 
+    {
+        get => _endPosition;
+        set
+        {
+            if (Board.IsPositionInBounds(value))
+            {
+                _endPosition = value;
+            }
+        }
+    }
+}

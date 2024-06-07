@@ -6,9 +6,11 @@ using UnityEngine.UI;
 
 public class GameStatusView : NetworkBehaviour
 {
+    [HideInInspector] public static GameStatusView singleton = null;
     [SerializeField] private Board _board;
     [SerializeField] private MoveUIElement _moveElementPrefab;
     [SerializeField] private RectTransform _moveContent;
+    [Header("Piece Image Prefabs")]
     [SerializeField] private Image _whiteKingSprite;
     [SerializeField] private Image _whitePawnSprite;
     [SerializeField] private Image _whiteKnightSprite;
@@ -28,9 +30,16 @@ public class GameStatusView : NetworkBehaviour
     private int _whiteScore = 0;
     private int _blackScore = 0;
 
-    private void Start()
+    private void Start () 
     {
-        AddMove();
+        if (singleton == null) 
+        {
+            singleton = this;
+        } 
+        else if(singleton == this)
+        {
+            Destroy(gameObject);
+        }
         UpdateCaptures();
     }
 
@@ -66,25 +75,19 @@ public class GameStatusView : NetworkBehaviour
     private void OnMove()
     {
         MoveUIElement currentMoveElement;
-        if (_board.Player == 0)
+        if (_board.Player == 1)
         {
             currentMoveElement = AddMove();
-        }
-        else
-        {
-            currentMoveElement = _currentMoveElements.Last();
-        }
-
-        currentMoveElement.SetMoveNumeration(_board.CurrentMove / 2);
-        if (_board.MovedPieces.Count == 0) return;
-        Move move = _board.GetLastMove();
-        Piece piece = move.MovedPiece;
-        if (1 - _board.Player == 0)
-        {
+            currentMoveElement.SetMoveNumeration(_board.CurrentMove / 2);
+            Move move = _board.GetLastMove();
+            Piece piece = move.MovedPiece;
             currentMoveElement.SetWhiteMove(MoveConverter.ConvertMoveToString(move, piece));
         }
         else
         {
+            currentMoveElement = _currentMoveElements.Last();
+            Move move = _board.GetLastMove();
+            Piece piece = move.MovedPiece;
             currentMoveElement.SetBlackMove(MoveConverter.ConvertMoveToString(move, piece));
         }
     }

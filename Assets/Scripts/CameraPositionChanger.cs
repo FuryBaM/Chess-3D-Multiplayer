@@ -1,4 +1,6 @@
 ﻿using System.Collections;
+using System.Linq;
+using TMPro;
 using UnityEngine;
 
 public class CameraPositionChanger : MonoBehaviour
@@ -25,6 +27,8 @@ public class CameraPositionChanger : MonoBehaviour
             Vector3 currentRotation = text.transform.rotation.eulerAngles;
             currentRotation.z = rotationValue;
             text.transform.rotation = Quaternion.Euler(currentRotation);
+            if (newSide == Side.black)
+                text.GetComponent<TextMeshProUGUI>().text = string.Concat(Enumerable.Reverse(text.GetComponent<TextMeshProUGUI>().text));
         }
         if (_currentCoroutine != null)
         {

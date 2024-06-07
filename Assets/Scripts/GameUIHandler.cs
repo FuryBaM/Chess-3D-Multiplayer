@@ -4,9 +4,6 @@ using Mirror;
 public class GameUIHandler : MonoBehaviour
 {
     [SerializeField] private Animator _rightPanelAnimator;
-    [SerializeField] private RectTransform _whiteCapturesImage;
-    [SerializeField] private RectTransform _blackCapturesImage;
-    [SerializeField] private RectTransform _moveContent;
     private void Start()
     {
         if (_rightPanelAnimator == null)

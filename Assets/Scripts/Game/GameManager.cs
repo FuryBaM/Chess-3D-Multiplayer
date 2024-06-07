@@ -20,10 +20,20 @@ public class GameManager : NetworkBehaviour
     private void OnMate()
     {
         print($"Mate! Player {1 - _board.Player} has won.");
+        string winner;
+        if (1 - _board.Player == (int)Side.white)
+        {
+            winner = "White";
+        }
+        else
+        {
+            winner = "Black";
+        }
+        ClientUI.singleton.ShowGameOverPanel($"{winner} wins", "by checkmate");
     }
     private void OnStalemate()
     {
-        print($"Draw!");
+        ClientUI.singleton.ShowGameOverPanel($"Draw", "by stalemate");
     }
     private void OnCapture(uint capturedPieceId)
     {
@@ -51,10 +61,6 @@ public class GameManager : NetworkBehaviour
             }
             GiveColor();
             _board.SyncBoard();
-        }
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            NetworkManager.singleton.StopHost();
         }
     }
 

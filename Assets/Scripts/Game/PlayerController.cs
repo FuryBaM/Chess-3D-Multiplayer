@@ -34,6 +34,7 @@ public sealed class PlayerController : NetworkBehaviour
             }
         }
     }
+    public Side GetPlayerSide() => _player;
     [TargetRpc]
     public void OnSideChanged(Side newSide)
     {
@@ -119,6 +120,7 @@ public sealed class PlayerController : NetworkBehaviour
                 if (hit.collider.gameObject.CompareTag("Board"))
                 {
                     movePosition = new Vector2Int(Mathf.RoundToInt(hit.point.x), Mathf.RoundToInt(hit.point.z));
+                    if (!NetworkClient.ready) NetworkClient.Ready();
                     CmdMovePiece(startPosition, movePosition);
                     UnselectPiece();
                 }
@@ -127,6 +129,7 @@ public sealed class PlayerController : NetworkBehaviour
                     Piece piece = hit.collider.GetComponent<Piece>();
                     if (piece.Side == _player) return;
                     movePosition = _board.GetPiecePosition(piece);
+                    if (!NetworkClient.ready) NetworkClient.Ready();
                     CmdMovePiece(startPosition, movePosition);
                     UnselectPiece();
                 }

@@ -8,6 +8,15 @@ public enum Side
     white = 0,
     black = 1
 }
+public enum PieceType
+{
+    king = 'k',
+    pawn = 'p',
+    knight = 'n',
+    bishop = 'b',
+    rook = 'r',
+    queen = 'q'
+}
 [Serializable]
 public abstract class Piece : NetworkBehaviour
 {
