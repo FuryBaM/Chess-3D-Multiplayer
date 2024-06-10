@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.Design;
 using Mirror;
 using Mirror.Discovery;
 using UnityEngine;
@@ -10,7 +11,10 @@ public class GameManager : NetworkBehaviour
 
     private void Start()
     {
-        Debug.Log(Utils.IsHeadless());
+        if (Utils.IsHeadless())
+        {
+            NetworkManager.singleton.GetComponent<NetworkDiscovery>().AdvertiseServer();
+        }
     }
 
     private void OnCheck()

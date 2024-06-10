@@ -10,13 +10,15 @@ public struct MoveData
     public Vector2Int StartPosition;
     public Vector2Int EndPosition;
     public bool Promotion;
-    public MoveData(uint movedPieceId, bool castle, Vector2Int startPosition, Vector2Int endPosition, bool promotion = false)
+    public PieceType PromotionPiece;
+    public MoveData(uint movedPieceId, bool castle, Vector2Int startPosition, Vector2Int endPosition, bool promotion = false, PieceType promotionPiece = PieceType.pawn)
     {
         MovedPieceId = movedPieceId;
         Castle = castle;
         StartPosition = startPosition;
         EndPosition = endPosition;
         Promotion = promotion;
+        PromotionPiece = promotionPiece;
     }
 }
 public class Move
@@ -26,13 +28,15 @@ public class Move
     public Vector2Int StartPosition;
     public Vector2Int EndPosition;
     public bool Promotion;
-    public Move(Piece movedPiece, bool castle, Vector2Int startPosition, Vector2Int endPosition, bool promotion = false)
+    public PieceType PromotionPiece;
+    public Move(Piece movedPiece, bool castle, Vector2Int startPosition, Vector2Int endPosition, bool promotion = false, PieceType promotionPiece = PieceType.pawn)
     {
         MovedPiece = movedPiece;
         Castle = castle;
         StartPosition = startPosition;
         EndPosition = endPosition;
         Promotion = promotion;
+        PromotionPiece = promotionPiece;
     }
     public override string ToString()
     {
@@ -95,5 +99,69 @@ public static class MoveConverter
         char file = (char)('a' + position.x);
         int rank = position.y + 1;
         return file.ToString() + rank.ToString();
+    }
+
+    public static Move ConvertStringToMove(Board board, string moveString)
+    {
+        if (moveString.Length != 4 && moveString.Length != 5)
+        {
+            Debug.LogError("Invalid move string format. Must be in the format 'startEnd', e.g., 'd8g5'. " + moveString);
+            return null;
+        }
+        else if (moveString == null)
+        {
+            Debug.LogError("Null string" + moveString);
+            return null;
+        }
+
+        int startFile = moveString[0] - 'a';
+        int startRank = int.Parse(moveString[1].ToString()) - 1;
+        int endFile = moveString[2] - 'a';
+        int endRank = int.Parse(moveString[3].ToString()) - 1;
+        bool promotion = false;
+        PieceType promotionPiece = PieceType.queen;
+        if (moveString.Length == 5)
+        {
+            promotion = true;
+            switch (char.ToLower(moveString[4]))
+            {
+                case 'n':
+                {
+                    promotionPiece = PieceType.knight;
+                    break;
+                }
+                case 'b':
+                {
+                    promotionPiece = PieceType.bishop;
+                    break;
+                }
+                case 'r':
+                {
+                    promotionPiece = PieceType.rook;
+                    break;
+                }
+                case 'q':
+                {
+                    promotionPiece = PieceType.queen;
+                    break;
+                }
+                default:
+                {
+                    promotionPiece = PieceType.queen;
+                    break;
+                }
+            }
+        }
+
+        if (!Board.IsPositionInBounds(new Vector2Int(startFile, startRank)) ||
+            !Board.IsPositionInBounds(new Vector2Int(endFile, endRank)))
+        {
+            Debug.LogError("Invalid move string. Positions are out of bounds.");
+            return null;
+        }
+
+        Vector2Int startPosition = new Vector2Int(startFile, startRank);
+        Vector2Int endPosition = new Vector2Int(endFile, endRank);
+        return new Move(board.GetPieceAtPosition(startPosition), false, startPosition, endPosition, promotion, promotionPiece);
     }
 }

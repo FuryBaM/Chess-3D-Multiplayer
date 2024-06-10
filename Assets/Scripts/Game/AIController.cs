@@ -10,6 +10,7 @@ public class AIController : NetworkBehaviour
     [SerializeField] private Side _player = Side.black;
     [SerializeField] private Board _board;
     private IStockfish _stockfish;
+    public char PromotionPiece { get; private set; } = 'q';
 
     private void Start()
     {
@@ -37,11 +38,17 @@ public class AIController : NetworkBehaviour
         {
             PlayerPrefs.SetInt("SkillLevel", 1);
         }
+        if (!PlayerPrefs.HasKey("Depth"))
+        {
+            PlayerPrefs.SetInt("Depth", 5);
+        }
         string pathToStockfish = PlayerPrefs.GetString("StockfishPath");
         int stockfishSkillLevel = PlayerPrefs.GetInt("SkillLevel");
+        int depth = PlayerPrefs.GetInt("Depth");
         _stockfish = new Stockfish.NET.Core.Stockfish(pathToStockfish)
         {
-            SkillLevel = stockfishSkillLevel
+            SkillLevel = stockfishSkillLevel,
+            Depth = depth
         };
     }
 
@@ -67,7 +74,9 @@ public class AIController : NetworkBehaviour
             yield return null;
         }
         string moveString = calculateMoveTask.Result;
-        Move gameMove = _board.ConvertStringToMove(moveString);
+        Move gameMove = MoveConverter.ConvertStringToMove(_board, moveString);
+        PromotionPiece = (char)gameMove.PromotionPiece;
+        PromotionPiece = _player == Side.white ? char.ToUpper(PromotionPiece) : char.ToLower(PromotionPiece);
         MovePiece(gameMove.StartPosition, gameMove.EndPosition);
     }
     public void SetPlayerSide(Side side)

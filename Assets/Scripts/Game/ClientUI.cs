@@ -18,9 +18,13 @@ public class ClientUI : NetworkBehaviour
     [SerializeField] private Button _queenPromotionButton;
     [Space(20)]
     [SerializeField] private RectTransform _pawnPromotionPanel;
+    [Header("Game Status")]
     [SerializeField] private RectTransform _gameOverStatusPanel;
     [SerializeField] private TextMeshProUGUI _winnerText;
     [SerializeField] private TextMeshProUGUI _winMethodText;
+    [SerializeField] private TextMeshProUGUI _moveOwnerText;
+
+
     private void Start()
     {
         if (singleton == null) 
@@ -38,10 +42,7 @@ public class ClientUI : NetworkBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (isServer)
-                NetworkManager.singleton.StopHost();
-            else
-                NetworkManager.singleton.StopClient();
+            Disconnect();
         }
     }
     private void Initialize()
@@ -68,5 +69,18 @@ public class ClientUI : NetworkBehaviour
         _gameOverStatusPanel.gameObject.SetActive(true);
         _winnerText.text = winner;
         _winMethodText.text = winMethod;
+    }
+    [ClientRpc]
+    public void SetMoveOwner(Side side)
+    {
+        string player = side == Side.white ? "white" : "black";
+        _moveOwnerText.text = $"Makes move: {player}";
+    }
+    public void Disconnect()
+    {
+        if (isServer)
+            NetworkManager.singleton.StopHost();
+        else
+            NetworkManager.singleton.StopClient();
     }
 }

@@ -82,6 +82,7 @@ public class GameStatusView : NetworkBehaviour
             Move move = _board.GetLastMove();
             Piece piece = move.MovedPiece;
             currentMoveElement.SetWhiteMove(MoveConverter.ConvertMoveToString(move, piece));
+            ClientUI.singleton.SetMoveOwner(Side.black);
         }
         else
         {
@@ -89,6 +90,7 @@ public class GameStatusView : NetworkBehaviour
             Move move = _board.GetLastMove();
             Piece piece = move.MovedPiece;
             currentMoveElement.SetBlackMove(MoveConverter.ConvertMoveToString(move, piece));
+            ClientUI.singleton.SetMoveOwner(Side.white);
         }
     }
     

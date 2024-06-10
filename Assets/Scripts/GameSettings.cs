@@ -10,8 +10,14 @@ public class GameSettings : MonoBehaviour
     [SerializeField] private InputField _stockfishPathInputField;
     [SerializeField] private Slider _skillLevelSlider;
     [SerializeField] private TextMeshProUGUI _skillLevelText;
+    [SerializeField] private Slider _depthSlider;
+    [SerializeField] private TextMeshProUGUI _depthText;
     private void Awake()
     {
+        if (PlayerPrefs.HasKey("Depth"))
+        {
+            _depthSlider.value = PlayerPrefs.GetInt("Depth");
+        }
         if (PlayerPrefs.HasKey("SkillLevel"))
         {
             _skillLevelSlider.value = PlayerPrefs.GetInt("SkillLevel");
@@ -36,5 +42,13 @@ public class GameSettings : MonoBehaviour
     public void OnSkillSliderChanged()
     {
         _skillLevelText.text = ((int)_skillLevelSlider.value).ToString();
+    }
+    public void SetDepth()
+    {
+        PlayerPrefs.SetInt("Depth", (int)_depthSlider.value);
+    }
+    public void OnDepthSliderChanged()
+    {
+        _depthText.text = ((int)_depthSlider.value).ToString();
     }
 }

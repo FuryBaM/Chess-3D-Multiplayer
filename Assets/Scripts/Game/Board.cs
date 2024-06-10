@@ -102,6 +102,7 @@ public sealed class Board : NetworkBehaviour
 
     [Header("FEN Editor")]
     [SerializeField] private string fen;
+    private bool _singleplayerMode = false;
     public override void OnStartClient()
     {
         base.OnStartClient();
@@ -118,6 +119,15 @@ public sealed class Board : NetworkBehaviour
         OnMakeMove.AddListener(OnMove);
         OnCastle.AddListener(OnMove);
         OnPromotion.AddListener(OnMove);
+        if (FindObjectsOfType<SinglePlayerGameManager>().Length > 0)
+        {
+            _singleplayerMode = true;
+            Debug.Log("Singleplayer mode");
+        }
+        else
+        {
+            Debug.Log("Multiplayer mode");
+        }
     }
     private void OnDisable()
     {
@@ -357,7 +367,7 @@ public sealed class Board : NetworkBehaviour
                 {
                     piece = NetworkServer.spawned[newItem.MovedPieceId].GetComponent<Piece>();
                 }
-                _movesHistory.Add(new Move(piece, newItem.Castle, newItem.StartPosition, newItem.EndPosition, newItem.Promotion));
+                _movesHistory.Add(new Move(piece, newItem.Castle, newItem.StartPosition, newItem.EndPosition, newItem.Promotion, newItem.PromotionPiece));
                 break;
             }
             case SyncList<MoveData>.Operation.OP_INSERT:
@@ -371,7 +381,7 @@ public sealed class Board : NetworkBehaviour
                 {
                     piece = NetworkServer.spawned[newItem.MovedPieceId].GetComponent<Piece>();
                 }
-                _movesHistory.Insert(itemIndex, new Move(piece, newItem.Castle, newItem.StartPosition, newItem.EndPosition, newItem.Promotion));
+                _movesHistory.Insert(itemIndex, new Move(piece, newItem.Castle, newItem.StartPosition, newItem.EndPosition, newItem.Promotion, newItem.PromotionPiece));
                 break;
             }
             case SyncList<MoveData>.Operation.OP_CLEAR:
@@ -400,6 +410,7 @@ public sealed class Board : NetworkBehaviour
                 _movesHistory[itemIndex].StartPosition = newItem.StartPosition;
                 _movesHistory[itemIndex].EndPosition = newItem.EndPosition;
                 _movesHistory[itemIndex].Promotion = newItem.Promotion;
+                _movesHistory[itemIndex].PromotionPiece = newItem.PromotionPiece;
                 break;
             }
             default:
@@ -572,6 +583,7 @@ public sealed class Board : NetworkBehaviour
         if (!IsPositionInBounds(position)) return null;
         return _board[position.y, position.x];
     }
+    [Server]
     public void ImportFEN(string fenString)
     {
         if (!Application.isPlaying || !isServer) return;
@@ -600,6 +612,7 @@ public sealed class Board : NetworkBehaviour
             }
         }
     }
+    [Server]
     private Piece SpawnPieceByChar(char fenChar)
     {
         GameObject prefab = null;
@@ -689,37 +702,6 @@ public sealed class Board : NetworkBehaviour
 
         return fen;
     }
-
-    public Move ConvertStringToMove(string moveString)
-    {
-        if (moveString.Length != 4 && moveString.Length != 5)
-        {
-            Debug.LogError("Invalid move string format. Must be in the format 'startEnd', e.g., 'd8g5'. " + moveString);
-            return null;
-        }
-        else if (moveString == null)
-        {
-            Debug.LogError("Null string" + moveString);
-            return null;
-        }
-
-        int startFile = moveString[0] - 'a';
-        int startRank = int.Parse(moveString[1].ToString()) - 1;
-        int endFile = moveString[2] - 'a';
-        int endRank = int.Parse(moveString[3].ToString()) - 1;
-        bool promotion = moveString.Length == 5;
-
-        if (!IsPositionInBounds(new Vector2Int(startFile, startRank)) ||
-            !IsPositionInBounds(new Vector2Int(endFile, endRank)))
-        {
-            Debug.LogError("Invalid move string. Positions are out of bounds.");
-            return null;
-        }
-
-        Vector2Int startPosition = new Vector2Int(startFile, startRank);
-        Vector2Int endPosition = new Vector2Int(endFile, endRank);
-        return new Move(GetPieceAtPosition(startPosition), false, startPosition, endPosition, promotion);
-    }
     private int GetPieceIndex(Piece piece)
     {
         if (piece is King) return 0;
@@ -773,6 +755,10 @@ public sealed class Board : NetworkBehaviour
             canMove = Castle(endPosition.x > startPosition.x);
             if (canMove)
             {
+                if (Utils.IsHeadless())
+                {
+                    OnCastle?.Invoke();
+                }
                 RpcCastleInvoke();
                 return;
             }
@@ -809,6 +795,10 @@ public sealed class Board : NetworkBehaviour
                 _currentPlayer = 1 - _currentPlayer;
                 _currentMove++;
                 movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition));
+                if (Utils.IsHeadless())
+                {
+                    OnCapture?.Invoke(capturedPieceId);
+                }
                 RpcCaptureInvoke(capturedPieceId);
                 return;
             }
@@ -833,6 +823,10 @@ public sealed class Board : NetworkBehaviour
                 else
                 {
                     blackCaptures.Add(_board[endPosition.y, endPosition.x].netId);
+                }
+                if (Utils.IsHeadless())
+                {
+                    OnCapture?.Invoke(pieceId);
                 }
                 RpcCaptureInvoke(pieceId);
             }
@@ -864,6 +858,20 @@ public sealed class Board : NetworkBehaviour
         
         if (piece is Pawn && (endPosition.y == 0 || endPosition.y == 7))
         {
+            if (_singleplayerMode)
+            {
+                PlayerController playerController = FindObjectOfType<PlayerController>();
+                AIController aIController = FindObjectOfType<AIController>();
+                if (playerController.GetPlayerSide() != (Side)_currentPlayer)
+                {
+                    SetPromotionData(startPosition, endPosition);
+                    RequestPromotion(playerController.connectionToClient);
+                }
+                else
+                {
+                    PromotePawn(startPosition, endPosition, aIController.PromotionPiece);
+                }
+            }
             PlayerController[] playerControllers = FindObjectsOfType<PlayerController>();
             foreach (PlayerController playerController in playerControllers)
             {
@@ -881,6 +889,10 @@ public sealed class Board : NetworkBehaviour
             movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition));
         }
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
+        if (Utils.IsHeadless())
+        {
+            OnMakeMove?.Invoke();
+        }
         RpcMoveInvoke();
     }
     #endregion
@@ -929,7 +941,40 @@ public sealed class Board : NetworkBehaviour
 
         _board[endPosition.y, endPosition.x] = newPiece;
         UpdateBoardAtPosition(endPosition, newPiece);
-        movesHistoryData.Add(new MoveData(newPiece.netId, false, startPosition, endPosition, true));
+        PieceType promotionPiece = PieceType.queen;
+        switch (char.ToLower(newPieceChar))
+        {
+            case 'n':
+            {
+                promotionPiece = PieceType.knight;
+                break;
+            }
+            case 'b':
+            {
+                promotionPiece = PieceType.bishop;
+                break;
+            }
+            case 'r':
+            {
+                promotionPiece = PieceType.rook;
+                break;
+            }
+            case 'q':
+            {
+                promotionPiece = PieceType.queen;
+                break;
+            }
+            default:
+            {
+                promotionPiece = PieceType.queen;
+                break;
+            }
+        }
+        movesHistoryData.Add(new MoveData(newPiece.netId, false, startPosition, endPosition, true, promotionPiece));
+        if (Utils.IsHeadless())
+        {
+            OnPromotion?.Invoke();
+        }
         RpcPromotionInvoke();
         return newPiece;
     }
@@ -992,24 +1037,36 @@ public sealed class Board : NetworkBehaviour
             if (!CanPieceCoverKing(kingPosition, king.Side))
             {
                 IsGameOver = true;
-                OnMate?.Invoke();
+                if (Utils.IsHeadless())
+                {
+                    OnMate?.Invoke();
+                }
                 RpcMateInvoke();
             }
             else
             {
-                OnCheck?.Invoke();
+                if (Utils.IsHeadless())
+                {
+                    OnCheck?.Invoke();
+                }
                 RpcCheckInvoke();
             }
         }
         else if (isCheck)
         {
-            OnCheck?.Invoke();
+            if (Utils.IsHeadless())
+            {
+                OnCheck?.Invoke();
+            }
             RpcCheckInvoke();
         }
         else if (!isCheck && AllPiecesHaveNoMoves((Side)_currentPlayer))
         {
             IsGameOver = true;
-            OnStalemate?.Invoke();
+            if (Utils.IsHeadless())
+            {
+                OnStalemate?.Invoke();
+            }
             RpcStalemateInvoke();
         }
     }

@@ -4,13 +4,13 @@ using UnityEngine.SceneManagement;
 
 public class MenuNavigation : MonoBehaviour
 {
-    public void LoadGame()
+    public void LoadSinglePlayerGame()
     {
-        SceneManager.LoadScene("GameScene");
+        SceneManager.LoadScene("SinglePlayerScene");
     }
-    public void LoadMultiplayerGame()
+    public void StartGame()
     {
-        SceneManager.LoadScene("MultiplayerGameScene");
+        NetworkManager.singleton.StartHost();
     }
     public void LoadLobby()
     {
@@ -19,7 +19,12 @@ public class MenuNavigation : MonoBehaviour
     public void LoadMenu()
     {
         NetworkManager.singleton.dontDestroyOnLoad = false;
+        NetworkManager.singleton.runInBackground = false;
         Destroy(NetworkManager.singleton.gameObject);
         SceneManager.LoadScene("MenuScene");
+    }
+    public void QuitGame()
+    {
+        Application.Quit();
     }
 }
