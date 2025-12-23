@@ -432,6 +432,10 @@ namespace Stockfish.NET.Core
             }
         }
 
+        public void CloseProcess() => _stockfish.CloseProcess();
+
+        ~Stockfish() => CloseProcess();
+
         #endregion
     }
 }

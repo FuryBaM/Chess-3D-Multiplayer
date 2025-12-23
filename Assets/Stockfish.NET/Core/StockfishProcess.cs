@@ -84,7 +84,9 @@ namespace Stockfish.NET
         ~StockfishProcess()
         {
             //When process is going to be destructed => we are going to close stockfish process
-            _process.Close();
+            CloseProcess();
         }
+
+        public void CloseProcess() => _process.Close();
     }
 }

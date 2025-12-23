@@ -16,7 +16,6 @@ public class AIController : NetworkBehaviour
     {
         if (!isServer) return;
         MessageClient("Im server");
-        InitStockfish();
         _board = FindObjectOfType<Board>();
         _board.OnMakeMove.AddListener(OnMakeMove);
         _board.OnCastle.AddListener(OnMakeMove);
@@ -94,5 +93,13 @@ public class AIController : NetworkBehaviour
     {
         _stockfish.SetFenPosition(_board.GetFEN());
         return _stockfish.GetBestMove();
+    }
+    private void OnEnable()
+    {
+        InitStockfish();
+    }
+    private void OnDisable()
+    {
+        _stockfish.CloseProcess();
     }
 }
