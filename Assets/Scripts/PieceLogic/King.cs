@@ -42,8 +42,9 @@ public sealed class King : Piece
         }
         Vector2Int kingStartPosition = new Vector2Int(kingStartFile, rank);
         Vector2Int kingEndPosition = new Vector2Int(kingEndFile, rank);
+        Vector2Int kingThroughPosition = new Vector2Int(kingStartFile + (isShortCastle ? 1 : -1), rank);
 
-        if (board.IsAttackedCell(king, kingStartPosition) || board.IsAttackedCell(king, kingEndPosition))
+        if (board.IsAttackedCell(king, kingStartPosition) || board.IsAttackedCell(king, kingThroughPosition) || board.IsAttackedCell(king, kingEndPosition))
         {
             //Cannot castle: king would move through or into an attacked square.
             return false;
@@ -60,23 +61,16 @@ public sealed class King : Piece
 
         if (!Board.IsPositionInBounds(startPosition) || !Board.IsPositionInBounds(endPosition)) return false;
         if (startPosition == endPosition) return false;
+        if (IsFriendlyTarget(board, endPosition))
+        {
+            return false;
+        }
         if (board.IsAttackedCell(this, endPosition))
         {
             return false;
         }
 
         if (Mathf.Abs(endX - startX) <= 1 && Mathf.Abs(endY - startY) <= 1)
-        {
-            if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else if (CanCastle(startPosition, endPosition, board))
         {
             return true;
         }
@@ -118,6 +112,18 @@ public sealed class King : Piece
                     }
                 }
             }
+        }
+
+        // Castling options
+        Vector2Int shortCastle = new Vector2Int(startX + 2, startY);
+        Vector2Int longCastle = new Vector2Int(startX - 2, startY);
+        if (CanCastle(currentPosition, shortCastle, board))
+        {
+            possibleMoves.Add(shortCastle);
+        }
+        if (CanCastle(currentPosition, longCastle, board))
+        {
+            possibleMoves.Add(longCastle);
         }
 
         return possibleMoves;

@@ -59,6 +59,9 @@ public sealed class Board : NetworkBehaviour
         {Side.white, new List<Piece>()},
         {Side.black, new List<Piece>()}
     };
+    [SyncVar] private string _currentFenSnapshot = string.Empty;
+    [SyncVar] private string _storedNetworkFen = string.Empty;
+    private string _localAnalysisFen = string.Empty;
     public IDictionary<Side, List<Piece>> CapturedPieces
     {
         get
@@ -71,6 +74,8 @@ public sealed class Board : NetworkBehaviour
         get;
         private set;
     }
+    public string CurrentFen => _currentFenSnapshot;
+    public string StoredNetworkFen => _storedNetworkFen;
 
     public UnityEvent OnCheck;
     public UnityEvent OnMate;
@@ -128,6 +133,10 @@ public sealed class Board : NetworkBehaviour
         {
             Debug.Log("Multiplayer mode");
         }
+        if (isServer)
+        {
+            UpdateFenSnapshot();
+        }
     }
     private void OnDisable()
     {
@@ -158,6 +167,7 @@ public sealed class Board : NetworkBehaviour
         _currentMove = 1;
         ClearBoard();
         ImportFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        UpdateFenSnapshot();
     }
     private void Update()
     {
@@ -583,6 +593,16 @@ public sealed class Board : NetworkBehaviour
         if (!IsPositionInBounds(position)) return null;
         return _board[position.y, position.x];
     }
+
+    [Server]
+    private void UpdateFenSnapshot()
+    {
+        _currentFenSnapshot = GetFEN();
+        if (string.IsNullOrEmpty(_storedNetworkFen))
+        {
+            _storedNetworkFen = _currentFenSnapshot;
+        }
+    }
     [Server]
     public void ImportFEN(string fenString)
     {
@@ -611,6 +631,7 @@ public sealed class Board : NetworkBehaviour
                 }
             }
         }
+        UpdateFenSnapshot();
     }
     [Server]
     private Piece SpawnPieceByChar(char fenChar)
@@ -713,6 +734,48 @@ public sealed class Board : NetworkBehaviour
         return -1;
     }
 
+    #region Board State Snapshots
+    public string ExportBoardState() => _currentFenSnapshot;
+
+    [Command(requiresAuthority = false)]
+    public void CmdStoreNetworkSnapshot()
+    {
+        UpdateFenSnapshot();
+        _storedNetworkFen = _currentFenSnapshot;
+        TargetPushAnalysisFen(connectionToClient, _storedNetworkFen);
+    }
+
+    [Command(requiresAuthority = false)]
+    public void CmdApplyAnalysisFen(string fenString)
+    {
+        if (string.IsNullOrWhiteSpace(fenString)) return;
+        ImportFEN(fenString);
+        _localAnalysisFen = fenString;
+        SyncBoard();
+        UpdateFenSnapshot();
+    }
+
+    [Command(requiresAuthority = false)]
+    public void CmdRestoreNetworkState()
+    {
+        string fenToLoad = string.IsNullOrEmpty(_storedNetworkFen) ? _currentFenSnapshot : _storedNetworkFen;
+        if (string.IsNullOrEmpty(fenToLoad)) return;
+        ImportFEN(fenToLoad);
+        SyncBoard();
+        UpdateFenSnapshot();
+        TargetPushAnalysisFen(connectionToClient, fenToLoad);
+    }
+
+    [TargetRpc]
+    private void TargetPushAnalysisFen(NetworkConnection target, string fen)
+    {
+        if (ClientUI.singleton != null)
+        {
+            ClientUI.singleton.UpdateAnalysisFen(fen);
+        }
+    }
+    #endregion
+
 
     public IEnumerator MovePieceSmoothly(Piece piece, Vector2Int startPosition, Vector2Int endPosition, float moveDuration, AnimationCurve curve)
     {
@@ -755,6 +818,7 @@ public sealed class Board : NetworkBehaviour
             canMove = Castle(endPosition.x > startPosition.x);
             if (canMove)
             {
+                UpdateFenSnapshot();
                 if (Utils.IsHeadless())
                 {
                     OnCastle?.Invoke();
@@ -795,6 +859,7 @@ public sealed class Board : NetworkBehaviour
                 _currentPlayer = 1 - _currentPlayer;
                 _currentMove++;
                 movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition));
+                UpdateFenSnapshot();
                 if (Utils.IsHeadless())
                 {
                     OnCapture?.Invoke(capturedPieceId);
@@ -889,6 +954,7 @@ public sealed class Board : NetworkBehaviour
             movesHistoryData.Add(new MoveData(piece.netId, false, startPosition, endPosition));
         }
         StartCoroutine(MovePieceSmoothly(piece, startPosition, endPosition, _moveDuration, _pieceMovementCurve));
+        UpdateFenSnapshot();
         if (Utils.IsHeadless())
         {
             OnMakeMove?.Invoke();
@@ -971,6 +1037,7 @@ public sealed class Board : NetworkBehaviour
             }
         }
         movesHistoryData.Add(new MoveData(newPiece.netId, false, startPosition, endPosition, true, promotionPiece));
+        UpdateFenSnapshot();
         if (Utils.IsHeadless())
         {
             OnPromotion?.Invoke();
