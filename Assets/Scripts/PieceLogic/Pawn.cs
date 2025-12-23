@@ -11,23 +11,19 @@ public sealed class Pawn : Piece
         int startY = Mathf.RoundToInt(myPiecePosition.y);
         int endX = Mathf.RoundToInt(opponentPiecePosition.x);
         int endY = Mathf.RoundToInt(opponentPiecePosition.y);
+
+        int direction = Side == Side.white ? 1 : -1;
         if (IsEnPassant(myPiecePosition, opponentPiecePosition, board.GetLastMove()))
         {
             return true;
         }
-        if (Mathf.Abs(endX - startX) == 1 && Mathf.Abs(endY - startY) == 1)
+
+        if (Mathf.Abs(endX - startX) == 1 && endY - startY == direction)
         {
-            if (board.GameBoard[endY, endX] == null) return false;
-            bool friendlyFire = !board.IsEmptyCell(opponentPiecePosition) && board.GetPieceAtPosition(opponentPiecePosition).Side == Side;
-            if (Side == Side.white)
-            {
-                return endY > startY && !friendlyFire;
-            }
-            else
-            {
-                return endY < startY && !friendlyFire;
-            }
+            Piece target = board.GetPieceAtPosition(opponentPiecePosition);
+            return target != null && target.Side != Side;
         }
+
         return false;
     }
 
@@ -45,27 +41,41 @@ public sealed class Pawn : Piece
         {
             return false;
         }
-        if (Mathf.Abs(endX - startX) == 0)
+
+        int direction = Side == Side.white ? 1 : -1;
+        int deltaX = endX - startX;
+        int deltaY = endY - startY;
+
+        if (deltaX == 0)
         {
-            if (endY - startY == 1 && Side == Side.white || endY - startY == -1 && Side == Side.black)
-            { 
-                return true && board.GameBoard[endY, endX] == null;
-            }
-            else
+            if (deltaY == direction && board.GameBoard[endY, endX] == null)
             {
-                if (endY - startY == 2 && Side == Side.white && startY == 1 || endY - startY == -2 && Side == Side.black && startY == 6)
-                    return true && board.GameBoard[endY, endX] == null;
-                return false;
+                return true;
             }
+
+            bool isStartingRank = (Side == Side.white && startY == 1) || (Side == Side.black && startY == 6);
+            if (deltaY == 2 * direction && isStartingRank)
+            {
+                int intermediateY = startY + direction;
+                if (board.GameBoard[intermediateY, endX] == null && board.GameBoard[endY, endX] == null)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
-        else if (CanCapture(startPosition, endPosition, board))
+
+        if (Mathf.Abs(deltaX) == 1 && deltaY == direction)
+        {
+            return CanCapture(startPosition, endPosition, board);
+        }
+
+        if (IsEnPassant(startPosition, endPosition, board.GetLastMove()))
         {
             return true;
         }
-        else
-        {
-            return false;
-        }
+
+        return false;
     }
     public bool IsEnPassant(Vector2Int startPosition, Vector2Int endPosition, Move lastMove)
     {
@@ -117,11 +127,11 @@ public sealed class Pawn : Piece
         // Проверяем возможные ходы для захвата
         Vector2Int captureLeft = new Vector2Int(startX - 1, startY + forwardDirection);
         Vector2Int captureRight = new Vector2Int(startX + 1, startY + forwardDirection);
-        if (Board.IsPositionInBounds(captureLeft) && board.GetPieceAtPosition(captureLeft) != null && board.GetPieceAtPosition(captureLeft).Side != Side)
+        if (Board.IsPositionInBounds(captureLeft) && CanCapture(currentPosition, captureLeft, board))
         {
             possibleMoves.Add(captureLeft);
         }
-        if (Board.IsPositionInBounds(captureRight) && board.GetPieceAtPosition(captureRight) != null && board.GetPieceAtPosition(captureRight).Side != Side)
+        if (Board.IsPositionInBounds(captureRight) && CanCapture(currentPosition, captureRight, board))
         {
             possibleMoves.Add(captureRight);
         }
@@ -135,10 +145,5 @@ public sealed class Pawn : Piece
         }
 
         return possibleMoves;
-    }
-
-    internal bool IsEnPassant(Vector2Int startPosition, Vector2Int endPosition, MoveData? lastMove)
-    {
-        throw new NotImplementedException();
     }
 }

@@ -9,12 +9,8 @@ public sealed class Queen : Piece
         int startY = Mathf.RoundToInt(startPosition.y);
         int endX = Mathf.RoundToInt(endPosition.x);
         int endY = Mathf.RoundToInt(endPosition.y);
-        bool friendlyFire = board.GameBoard[endPosition.y, endPosition.x] && board.GameBoard[endY, endX].Side == Side;
-        if (startX == endX || startY == endY || Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY) && !friendlyFire)
-        {
-            return true;
-        }
-        return false;
+        bool friendlyFire = board.GetPieceAtPosition(endPosition) != null && board.GetPieceAtPosition(endPosition).Side == Side;
+        return (startX == endX || startY == endY || Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY)) && !friendlyFire;
     }
     public override bool MovePiece(Vector2Int startPosition, Vector2Int endPosition, Board board)
     {
@@ -33,41 +29,20 @@ public sealed class Queen : Piece
             return false;
         }
 
-        if (startX == endX || startY == endY || Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY))
-        {
-            int deltaX = (endX - startX) == 0 ? 0 : (endX - startX) / Mathf.Abs(endX - startX);
-            int deltaY = (endY - startY) == 0 ? 0 : (endY - startY) / Mathf.Abs(endY - startY);
-            int x = startX + deltaX;
-            int y = startY + deltaY;
-            while (x != endX || y != endY)
-            {
-                if (board.GameBoard[y, x] != null)
-                {
-                    if (board.GameBoard[y, x].Side == Side)
-                    {
-                        return false;
-                    }
-                    else if (board.GameBoard[y, x].Side != Side)
-                    {
-                        return false;
-                    }
-                }
-                x += deltaX;
-                y += deltaY;
-            }
-            if (board.GameBoard[endY, endX] == null || board.GameBoard[endY, endX].Side != this.Side)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
+        bool movesLikeRook = startX == endX || startY == endY;
+        bool movesLikeBishop = Mathf.Abs(endX - startX) == Mathf.Abs(endY - startY);
+        if (!movesLikeRook && !movesLikeBishop)
         {
             return false;
         }
+
+        Vector2Int step = new Vector2Int(Mathf.Clamp(endX - startX, -1, 1), Mathf.Clamp(endY - startY, -1, 1));
+        if (!IsPathClear(startPosition, endPosition, board, step))
+        {
+            return false;
+        }
+
+        return !IsFriendlyTarget(board, endPosition);
     }
     public override List<Vector2Int> GetPossibleMoves(Vector2Int currentPosition, Board board)
     {
